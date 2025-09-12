@@ -71,13 +71,20 @@ async function login(req, res) {
 }
 
 async function register(req, res) {
-    const { name, email, password } = req.body;
+    const { name, email, password, school_code } = req.body;
 
     //validate fields
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !school_code) {
       return res.status(400).json({ 
         success: false,
-        message: 'Nome, email e senha obrigatorios' 
+        message: 'Nome, email, senha e codigo escolar são obrigatorios' 
+      });
+    }
+    //validating school code
+    if(school_code !== process.env.SCHOOL_CODE){
+      return res.status(400).json({ 
+        success: false,
+        message: 'Codigo escolar invalido' 
       });
     }
     if (typeof name !== 'string' || typeof email !== 'string' || typeof password !== 'string' || !email.includes('@')) {
@@ -104,7 +111,7 @@ async function register(req, res) {
         }
         return res.status(201).json({
             success: true,
-            response,
+            message: response,
         });
     } catch (error) {
         return res.status(500).json({ 

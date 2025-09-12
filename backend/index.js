@@ -16,8 +16,10 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
-// Import routes
+// teacher routes
 app.use('/api/teacher/auth', auth);
+
+// student routes
 
 
 
