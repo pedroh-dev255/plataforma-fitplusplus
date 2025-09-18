@@ -3,8 +3,6 @@ PORT=3000
 JWT_SECRET=your_jwt_secret_key
 JWT_EXPIRES_IN=7h
 
-#School
-SCHOOL_CODE="FitPlusPlus"
 
 #Mysql
 DB_HOST=localhost
