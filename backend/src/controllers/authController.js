@@ -1,129 +1,75 @@
-const {loginService, registerService} = require('../services/authService');
+const { loginService, registerService } = require('../services/authService');
 const dotenv = require('dotenv');
-const path = require('path');
-const bcrypt = require('bcrypt');
-const fs = require('fs');
-
 dotenv.config();
 
-
-
 async function validate(req, res) {
-    try {
-      res.json({
-        success: true,
-        ok: 'ok',
-      });
-    } catch (error) {
-      res.status(401).json({ 
-        success: false,
-        message: error.message 
-      });
-    }
+  try {
+    res.json({ success: true, ok: 'ok' });
+  } catch (error) {
+    res.status(401).json({ success: false, message: error.message });
+  }
 }
 
 async function login(req, res) {
-    const { email, password } = req.body;
+  const { email, password, tipo } = req.body;
 
-    //validate fields
+  if (!email || !password || !tipo) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email, senha e tipo são obrigatórios',
+    });
+  }
 
-    if (!email || !password) {
-      return res.status(400).json({ 
+  try {
+    const response = await loginService(email, password, tipo);
+
+    if (!response) {
+      return res.status(401).json({
         success: false,
-        message: 'Email e senha obrigatorios' 
+        message: 'Credenciais inválidas',
       });
     }
-    if (typeof email !== 'string' || typeof password !== 'string' || !email.includes('@')) {
-      return res.status(400).json({ 
-        success: false,
-        message: 'Email e senha invalidos' 
-      });
-    }
-    if (password.length < 6) { 
-        return res.status(400).json({
-            success: false,
-            message: 'Senha deve ter no minimo 6 caracteres'
-        });
-    }
 
-    try {
-        
-        const response = await loginService(email, password);
-
-        if (!response || response === null) {
-            return res.status(401).json({
-                success: false,
-                message: 'Email ou senha invalidos'
-            });
-        }
-        
-        return res.status(200).json({
-            success: true,
-            response,
-        });
-
-    } catch (error) {
-        return res.status(500).json({ 
-            success: false,
-            message: 'Erro no servidor' 
-        });
-    }
+    return res.status(200).json({ success: true, ...response });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Erro no servidor',
+    });
+  }
 }
 
 async function register(req, res) {
-    const { name, email, password, school_code } = req.body;
+  const { nome, email, senha, tipo, professor_code } = req.body;
 
-    //validate fields
-    if (!name || !email || !password || !school_code) {
-      return res.status(400).json({ 
-        success: false,
-        message: 'Nome, email, senha e codigo escolar são obrigatorios' 
-      });
-    }
-    //validating school code
-    if(school_code !== process.env.SCHOOL_CODE){
-      return res.status(400).json({ 
-        success: false,
-        message: 'Codigo escolar invalido' 
-      });
-    }
-    if (typeof name !== 'string' || typeof email !== 'string' || typeof password !== 'string' || !email.includes('@')) {
-      return res.status(400).json({ 
-        success: false,
-        message: 'Nome, email e senha invalidos' 
-      });
-    }
-    if (password.length < 6) { 
-        return res.status(400).json({
-            success: false,
-            message: 'Senha deve ter no minimo 6 caracteres'
-        });
+  if (!nome || !email || !senha || !tipo) {
+    return res.status(400).json({
+      success: false,
+      message: 'Nome, email, senha e tipo são obrigatórios',
+    });
+  }
+
+  try {
+    const response = await registerService(
+      nome,
+      email,
+      senha,
+      tipo,
+      professor_code
+    );
+
+    if (!response.success) {
+      return res.status(400).json(response);
     }
 
-    try {
-        
-        const response = await registerService(name, email, password);
-        if (!response || response === null) {
-            return res.status(409).json({
-                success: false,
-                message: 'Usuario ja existe'
-            });
-        }
-        return res.status(201).json({
-            success: true,
-            message: response,
-        });
-    } catch (error) {
-        return res.status(500).json({ 
-            success: false,
-            message: 'Erro no servidor' 
-        });
-    }
+    return res.status(201).json(response);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro no servidor',
+    });
+  }
 }
 
-
-module.exports = {
-    register,
-    login,
-    validate
-}
+module.exports = { register, login, validate };

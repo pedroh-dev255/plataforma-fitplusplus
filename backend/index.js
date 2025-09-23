@@ -3,8 +3,9 @@ const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 
 //routes
-const auth = require('./src-teacher/routes/authRoute');
-const classRoute = require('./src-teacher/routes/classRoute');
+const auth = require('./src/routes/authRoute');
+const notify = require('./src/routes/notifyRoute');
+
 
 dotenv.config();
 
@@ -17,11 +18,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
-// teacher routes
-app.use('/api/teacher/auth', auth);
-app.use('/api/teacher/class', classRoute);
 
-// student routes
+app.use('/api/auth', auth);
+app.use('/api/notify', notify);
+
+
 
 
 
