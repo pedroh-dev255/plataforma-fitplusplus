@@ -11,9 +11,10 @@ async function validate(req, res) {
 }
 
 async function login(req, res) {
-  const { email, password, tipo } = req.body;
+  const { email, password, type } = req.body;
+  console.log('Tentativa de login: ',req.body);
 
-  if (!email || !password || !tipo) {
+  if (!email || !password || !type) {
     return res.status(400).json({
       success: false,
       message: 'Email, senha e tipo são obrigatórios',
@@ -21,7 +22,7 @@ async function login(req, res) {
   }
 
   try {
-    const response = await loginService(email, password, tipo);
+    const response = await loginService(email, password, type);
 
     if (!response) {
       return res.status(401).json({
