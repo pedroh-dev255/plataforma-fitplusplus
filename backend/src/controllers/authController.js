@@ -12,7 +12,7 @@ async function validate(req, res) {
 
 async function login(req, res) {
   const { email, password, type } = req.body;
-  console.log('Tentativa de login: ',req.body);
+  //console.log('Tentativa de login: ',req.body);
 
   if (!email || !password || !type) {
     return res.status(400).json({
