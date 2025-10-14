@@ -1,4 +1,4 @@
-const { loginService, registerService } = require('../services/authService');
+const { loginService, registerService, resetService, resetConfirmService } = require('../services/authService');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -41,22 +41,39 @@ async function login(req, res) {
 }
 
 async function register(req, res) {
-  const { nome, email, senha, tipo, professor_code } = req.body;
+  const { schoolcode, classcode, nome, dtNasc, email, senha, tipo } = req.body;
 
-  if (!nome || !email || !senha || !tipo) {
+  if (!nome || !dtNasc || !email || !senha || !tipo) {
     return res.status(400).json({
       success: false,
-      message: 'Nome, email, senha e tipo são obrigatórios',
+      message: 'Nome, data de nascimento, email, senha e tipo são obrigatórios',
     });
   }
+
+  if(tipo == 'professor' && !schoolcode){
+    return res.status(400).json({
+      success: false,
+      message: 'Código mestre de professor é obrigatório',
+    });
+  }
+
+  if(tipo == 'aluno' && !classcode){
+    return res.status(400).json({
+      success: false,
+      message: 'Código do professor é obrigatório',
+    });
+  }
+
+  const code = tipo == 'aluno' ? classcode : (tipo == 'professor' ? schoolcode : null);
 
   try {
     const response = await registerService(
       nome,
+      dtNasc,
       email,
       senha,
       tipo,
-      professor_code
+      code
     );
 
     if (!response.success) {
@@ -73,4 +90,45 @@ async function register(req, res) {
   }
 }
 
-module.exports = { register, login, validate };
+async function reset(req, res) {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email é obrigatório',
+    });
+  }
+  try {
+    const response = await resetService(email);
+
+    if (!response.success) {
+      return res.status(400).json(response);
+    }
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json(error);
+  }
+}
+
+async function resetConfirm(req, res) {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) {
+    return res.status(400).json({
+      success: false,
+      message: 'Token e nova senha são obrigatórios',
+    });
+  }
+  try {
+    const response = await resetConfirmService(token, newPassword);
+    if (!response.success) {
+      return res.status(400).json(response);
+    }
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json(error);
+  }
+}
+
+module.exports = { register, login, reset,resetConfirm, validate };

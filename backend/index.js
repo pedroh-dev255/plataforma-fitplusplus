@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 //routes
 const auth = require('./src/routes/authRoute');
 const notify = require('./src/routes/notifyRoute');
+const events = require('./src/routes/eventsRoute');
 
 
 dotenv.config();
@@ -17,6 +18,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use('/api/auth', auth);
 app.use('/api/notify', notify);
+app.use('/api/events', events);
 
 
 app.listen(port, () => {
