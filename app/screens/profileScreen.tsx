@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Modal, FlatList, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Modal, FlatList, Alert, Platform, Share } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../components/AuthContext';
 import Toast from 'react-native-toast-message';
@@ -24,9 +24,13 @@ type Evento = {
 export default function ProfileScreen() {
   const { user, setUser } = useAuth();
   const navigation = useNavigation<any>();
-  const [editMode, setEditMode] = useState(false);
+  // modal-based edit flow
+  const [showEditModal, setShowEditModal] = useState(false);
   const [name, setName] = useState(user?.nome || '');
   const [photo, setPhoto] = useState(user?.foto_perfil || '');
+  const [dtNascDate, setDtNascDate] = useState<Date | null>(null);
+  const [dtNasc, setDtNasc] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // professor-specific
   const [turmas, setTurmas] = useState<Turma[]>([]);
@@ -42,6 +46,21 @@ export default function ProfileScreen() {
   useEffect(() => {
     setName(user?.nome || '');
     setPhoto(user?.foto_perfil || '');
+    // initialize date of birth if available (assumes ISO string)
+    if (user?.data_nascimento) {
+      try {
+        const d = new Date(user.data_nascimento);
+        if (!isNaN(d.getTime())) {
+          setDtNascDate(d);
+          setDtNasc(`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`);
+        }
+      } catch (e) {
+        // ignore parse errors
+      }
+    } else {
+      setDtNascDate(null);
+      setDtNasc('');
+    }
     // load professor data if needed
     (async () => {
       if (user?.tipo === 'professor') {
@@ -56,14 +75,15 @@ export default function ProfileScreen() {
   const saveProfile = async () => {
     if (!name.trim()) return Toast.show({ type: 'error', text1: 'Nome obrigatório' });
     try {
-      // primeiro, enviar para backend (se tiver endpoint)
       const token = await AsyncStorage.getItem('token');
-      const res = await updateProfile(token, { nome: name.trim(), photoUri: photo && photo.startsWith('http') ? undefined : photo });
-      // backend deve retornar user atualizado
-      const updated = res?.user ? res.user : { ...user, nome: name.trim(), foto_perfil: photo };
+      const body: any = { nome: name.trim() };
+      if (photo && !photo.startsWith('http')) body.photoUri = photo;
+      if (dtNascDate) body.data_nascimento = dtNascDate.toISOString();
+      const res = await updateProfile(token, body);
+      const updated = res?.user ? res.user : { ...user, nome: name.trim(), foto_perfil: photo, data_nascimento: dtNascDate ? dtNascDate.toISOString() : user?.data_nascimento };
       await AsyncStorage.setItem('userData', JSON.stringify(updated));
       setUser(updated);
-      setEditMode(false);
+      setShowEditModal(false);
       Toast.show({ type: 'success', text1: 'Perfil atualizado' });
     } catch (err: any) {
       console.warn('updateProfile error', err);
@@ -89,6 +109,41 @@ export default function ProfileScreen() {
     if (asset?.uri) setPhoto(asset.uri);
   };
 
+  // try to load clipboard module if available
+  let ClipboardModule: any = null;
+  try {
+    // use require so app doesn't crash if package not installed
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    ClipboardModule = require('@react-native-clipboard/clipboard');
+  } catch (e) {
+    ClipboardModule = null;
+  }
+
+  const handleShareCode = async () => {
+    const code = user?.codigo_professor || '';
+    const message = `Cadastre-se como meu aluno no Fit++ basta usar o meu codigo no seu cadastro: ${code}`;
+
+    // copy code to clipboard if possible
+    try {
+      if (ClipboardModule && ClipboardModule.setString) {
+        ClipboardModule.setString(code);
+        Toast.show({ type: 'success', text1: 'Código copiado para a área de transferência' });
+      } else {
+        Toast.show({ type: 'info', text1: 'Código pronto para compartilhar' });
+      }
+    } catch (err) {
+      console.warn('Clipboard error', err);
+    }
+
+    // open native share sheet
+    try {
+      await Share.share({ message });
+    } catch (err) {
+      console.warn('Share error', err);
+      Alert.alert('Erro', 'Não foi possível abrir o compartilhamento');
+    }
+  };
+
   const handleAddTurma = async () => {
     if (!newTurmaNome.trim()) return Toast.show({ type: 'error', text1: 'Nome da turma obrigatório' });
     const t: Turma = { id: Date.now().toString(), nome: newTurmaNome.trim(), descricao: newTurmaDescricao };
@@ -99,6 +154,34 @@ export default function ProfileScreen() {
     setNewTurmaNome('');
     setNewTurmaDescricao('');
     Toast.show({ type: 'success', text1: 'Turma criada' });
+  };
+
+  // Date picker require (safe)
+  let DateTimePicker: any = null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    DateTimePicker = require('@react-native-community/datetimepicker').default;
+  } catch (e) {
+    DateTimePicker = null;
+  }
+
+  const openEditModal = () => {
+    setName(user?.nome || '');
+    setPhoto(user?.foto_perfil || '');
+    if (user?.data_nascimento) {
+      const d = new Date(user.data_nascimento);
+      if (!isNaN(d.getTime())) {
+        setDtNascDate(d);
+        setDtNasc(`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`);
+      } else {
+        setDtNascDate(null);
+        setDtNasc('');
+      }
+    } else {
+      setDtNascDate(null);
+      setDtNasc('');
+    }
+    setShowEditModal(true);
   };
 
   const handleAddEvento = async () => {
@@ -120,10 +203,13 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerArea}>
+      <View style={{ flexDirection: 'row', alignItems: 'center'}}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
           <Text style={{ color: '#fff' }}>◀ Voltar</Text>
         </TouchableOpacity>
+      </View>
+      <View style={styles.headerArea}>
+        
         <View style={styles.avatarWrap}>
           {photo ? (
             <Image source={{ uri: photo.startsWith('http') ? photo : photo }} style={styles.avatar} />
@@ -132,60 +218,26 @@ export default function ProfileScreen() {
           )}
         </View>
         <View style={{ flex: 1 }}>
-          {!editMode ? (
-            <Text style={styles.name}>{user.nome}</Text>
-          ) : (
-            <TextInput style={styles.input} value={name} onChangeText={setName} />
-          )}
-          <Text style={styles.email}>{user.email}</Text>
+          <Text style={styles.name}>{user.nome}</Text>
+          <TouchableOpacity onPress={handleShareCode}>
+            <Text style={styles.code}>Código de Professor: {user.codigo_professor}</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.editBtn} onPress={() => setEditMode(!editMode)}>
-          <Text style={{ color: '#fff' }}>{editMode ? 'Cancelar' : 'Editar'}</Text>
+        <TouchableOpacity style={styles.editBtn} onPress={() => setShowEditModal(true)}>
+          <Text style={{ color: '#fff' }}>Editar</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.label}>Nome</Text>
-        {!editMode ? (
-          <Text style={styles.value}>{user.nome}</Text>
-        ) : (
-          <TextInput style={styles.input} value={name} onChangeText={setName} />
-        )}
-
-        <Text style={styles.label}>Email</Text>
-        <Text style={[styles.value, { opacity: 0.8 }]}>{user.email}</Text>
-
-        <Text style={styles.label}>Foto de perfil</Text>
-        {!editMode ? (
-          photo ? <Text style={styles.value}>{photo}</Text> : <Text style={styles.value}>Sem foto</Text>
-        ) : (
-          <>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <TouchableOpacity style={styles.smallBtn} onPress={pickImageFromLibrary}><Text style={{ color: '#fff' }}>Escolher</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.smallBtn} onPress={takePhoto}><Text style={{ color: '#fff' }}>Câmera</Text></TouchableOpacity>
-            </View>
-            <Text style={{ color: '#fff', marginTop: 8 }}>{photo}</Text>
-          </>
-        )}
-
-        {editMode && (
-          <TouchableOpacity style={styles.saveBtn} onPress={saveProfile}><Text style={styles.saveBtnText}>Salvar</Text></TouchableOpacity>
-        )}
+        <Text style={styles.label}>Biografia</Text>
+        <Text style={[styles.value, { opacity: 0.8 }]}>{user.bio}</Text>
+        {/* edits happen inside modal */}
       </View>
 
       {user.tipo === 'professor' && (
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Suas turmas</Text>
-          <TouchableOpacity style={styles.smallBtn} onPress={() => setShowTurmaModal(true)}><Text style={{ color: '#fff' }}>Criar turma</Text></TouchableOpacity>
-          <FlatList data={turmas} keyExtractor={t => t.id} renderItem={({ item }) => (
-            <View style={styles.listRow}><Text style={{ color: '#fff' }}>{item.nome}</Text></View>
-          )} ListEmptyComponent={() => <Text style={{ color: '#fff', opacity: 0.8 }}>Nenhuma turma</Text>} />
-
-          <Text style={[styles.sectionTitle, { marginTop: 12 }]}>Seus eventos</Text>
-          <TouchableOpacity style={styles.smallBtn} onPress={() => setShowEventoModal(true)}><Text style={{ color: '#fff' }}>Criar evento</Text></TouchableOpacity>
-          <FlatList data={eventos} keyExtractor={e => e.id} renderItem={({ item }) => (
-            <View style={styles.listRow}><Text style={{ color: '#fff' }}>{item.titulo}</Text><Text style={{ color: '#fff', opacity: 0.7 }}>{item.dataHora}</Text></View>
-          )} ListEmptyComponent={() => <Text style={{ color: '#fff', opacity: 0.8 }}>Nenhum evento</Text>} />
+          <Text>Meus Alunos</Text>
+          
         </View>
       )}
 
@@ -219,21 +271,61 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Edit Profile Modal */}
+      <Modal visible={showEditModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Editar perfil</Text>
+            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Nome" placeholderTextColor="#b0c4de" />
+            <TextInput style={styles.input} value={user?.bio || ''} onChangeText={() => {}} placeholder="Biografia" placeholderTextColor="#b0c4de" />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TouchableOpacity style={styles.smallBtn} onPress={pickImageFromLibrary}><Text style={{ color: '#fff' }}>Escolher Imagem</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.smallBtn} onPress={takePhoto}><Text style={{ color: '#fff' }}>Tirar Foto</Text></TouchableOpacity>
+            </View>
+            <TouchableOpacity style={[styles.input, { justifyContent: 'center' }]} onPress={() => setShowDatePicker(true)}>
+              <Text style={{ color: dtNascDate ? '#fff' : '#b0c4de' }}>{dtNascDate ? `${String(dtNascDate.getDate()).padStart(2,'0')}/${String(dtNascDate.getMonth()+1).padStart(2,'0')}/${dtNascDate.getFullYear()}` : 'Data de Nascimento'}</Text>
+            </TouchableOpacity>
+            {showDatePicker && DateTimePicker && (
+              <DateTimePicker
+                value={dtNascDate || new Date(2000,0,1)}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                maximumDate={new Date()}
+                onChange={(event: any, selectedDate?: Date) => {
+                  setShowDatePicker(Platform.OS === 'ios');
+                  if (selectedDate) {
+                    setDtNascDate(selectedDate);
+                    const formatted = `${String(selectedDate.getDate()).padStart(2,'0')}/${String(selectedDate.getMonth()+1).padStart(2,'0')}/${selectedDate.getFullYear()}`;
+                    setDtNasc(formatted);
+                  }
+                }}
+              />
+            )}
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 }}>
+              <TouchableOpacity style={styles.modalBtn} onPress={() => setShowEditModal(false)}><Text>Cancelar</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.modalBtnPrimary} onPress={saveProfile}><Text style={{ color: '#fff' }}>Salvar</Text></TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a3f7d', padding: 16, paddingTop: 60 },
+  container: { flex: 1, backgroundColor: '#0a1f3c', padding: 16, paddingTop: 60 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   headerArea: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   avatarWrap: { marginRight: 12 },
   avatar: { width: 80, height: 80, borderRadius: 40 },
   avatarPlaceholder: { backgroundColor: '#004a99', alignItems: 'center', justifyContent: 'center' },
   name: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  email: { color: '#cfe8ff', fontSize: 12 },
+  code: { color: '#cfe8ff', fontSize: 12 },
   editBtn: { backgroundColor: '#007bff', padding: 8, borderRadius: 8 },
-  card: { backgroundColor: '#074b86', borderRadius: 12, padding: 12, marginBottom: 12 },
+  /* dark translucent card used across screens */
+  card: { backgroundColor: 'rgba(0, 39, 83, 0.9)', borderRadius: 12, padding: 12, marginBottom: 12 },
   label: { color: '#cfe8ff', marginTop: 8 },
   value: { color: '#fff', fontSize: 16, marginTop: 4 },
   input: { backgroundColor: 'rgba(255,255,255,0.08)', color: '#fff', padding: 10, borderRadius: 8, marginTop: 6 },
@@ -243,8 +335,8 @@ const styles = StyleSheet.create({
   smallBtn: { backgroundColor: '#007bff', padding: 8, borderRadius: 8, alignSelf: 'flex-start', marginBottom: 8 },
   listRow: { padding: 8, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.04)', marginBottom: 6 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16 },
-  modalTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 8 },
+  modalCard: { backgroundColor: 'rgba(10,31,60,0.95)', borderRadius: 12, padding: 16 },
+  modalTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, color: '#fff' },
   modalBtn: { padding: 10 },
   modalBtnPrimary: { padding: 10, backgroundColor: '#007bff', borderRadius: 8 },
 });

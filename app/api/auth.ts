@@ -8,30 +8,47 @@ const api = axios.create({
 });
 
 async function login(email: string, senha: string, tipoUsuario: string) {
-    try {
-        console.log("Tentando logar com", email, senha);
+  
+  if (!email || !senha || !tipoUsuario) {
+      throw { message: "Preencha todos os campos" };
+  }
 
-        const response = await api.post(`/api/auth/login`, { email, password: senha, type: tipoUsuario });
+  try {
 
-        console.log("Resposta do login:", response);
+      console.log("Tentando logar com", email, senha);
+      const response = await api.post(`/api/auth/login`, { email, password: senha, type: tipoUsuario });
+      console.log("Resposta do login:", response);
+      const { token, user } = response.data;
+      // salva no dispositivo
+      await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("user", JSON.stringify(user));
+      return { token, user };
 
-        const { token, user } = response.data;
+  } catch (err) {
 
-        // salva no dispositivo
-        await AsyncStorage.setItem("token", token);
-        await AsyncStorage.setItem("user", JSON.stringify(user));
+      if (err && typeof err === "object" && "response" in err && err.response && typeof err.response === "object" && "data" in err.response) {
+          throw (err as any).response.data;
+      } else {
+          throw { message: "Erro ao conectar ao servidor" };
+      }
 
-        return { token, user };
-    } catch (err) {
-        if (err && typeof err === "object" && "response" in err && err.response && typeof err.response === "object" && "data" in err.response) {
-            throw (err as any).response.data;
-        } else {
-            throw { message: "Erro ao conectar ao servidor" };
-        }
-    }
+  }
 }
 
-const register = (username: string, password: string, email: string) => {}
+async function register(schoolcode: string, classcode: string, name: string, email: string, password: string, tipo: string, dataNascimento?: string) {
+  try {
+    const body: any = { schoolcode, classcode, nome: name, dtNasc: dataNascimento, email, senha: password, tipo };
+    const response = await api.post(`/api/auth/register`, body);
+    // backend deve retornar { token, user }
+    return response.data;
+  } catch (err) {
+    if (err && typeof err === "object" && "response" in err && err.response && typeof err.response === "object" && "data" in err.response) {
+        throw (err as any).response.data;
+    } else {
+        throw { message: "Erro ao conectar ao servidor" };
+    }
+  }
+}
 
 async function validateToken(token: string) {
   try {
@@ -44,8 +61,41 @@ async function validateToken(token: string) {
   }
 }
 
+async function reset(email: string) {
+  try {
+    const response = await api.post("api/auth/reset-password", {
+      email,
+    });
+    return response.data;
+  } catch (err) {
+    return null; // inválido ou expirado
+  }
+}
+
+async function resetPass(token: string, newPassword: string) {
+  try {
+    const response = await api.post("api/auth/reset-password/confirm", {
+      token,
+      newPassword,
+    });
+    console.log(response.data);
+    return response.data;
+
+  } catch (err) {
+    console.log(err);
+    if (err && typeof err === "object" && "response" in err && err.response && typeof err.response === "object" && "data" in err.response) {
+        throw (err as any).response.data;
+    } else {
+        
+        throw { message: "Erro ao conectar ao servidor" };
+    }
+  }
+}
+
 export { 
-    login,
-    register,
-    validateToken
- }
+  login,
+  register,
+  validateToken,
+  reset,
+  resetPass
+}

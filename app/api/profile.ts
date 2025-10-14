@@ -1,14 +1,16 @@
 import axios from 'axios';
 import { API_URL } from '../config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const api = axios.create({
+  baseURL: API_URL,
+});
+
 
 type UpdateProfileResponse = {
   user: any;
 };
 
-/**
- * Envia dados de perfil para o backend. Se photoFile for um objeto File/uri, envia multipart/form-data.
- * token é o token de autenticação (se aplicável).
- */
 export async function updateProfile(token: string | null, data: { nome?: string; photoUri?: string }) {
   const url = `${API_URL}/api/profile`;
   const headers: any = {};
@@ -35,4 +37,24 @@ export async function updateProfile(token: string | null, data: { nome?: string;
   // apenas nome
   const res = await axios.post(url, { nome: data.nome }, { headers });
   return res.data as UpdateProfileResponse;
+}
+
+
+export async function alunos(userID: string) {
+
+  const token = await AsyncStorage.getItem("token");
+    try {
+        const response = await api.post('/api/alunos/getAlunos',
+            { professorId: userID },
+            {
+                headers: { Authorization: `Bearer ${token}` },
+            }
+        );
+        console.debug('Alunos recebidos:', response.data);
+        return response.data.alunos;
+    } catch (err) {
+        console.error('Erro ao buscar alunos:', err);
+        throw err;
+    }
+  
 }

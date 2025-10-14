@@ -18,7 +18,10 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { AuthProvider, useAuth } from "./components/AuthContext";
 import LoginScreen from "./screens/loginScreen";
 import HomeScreen  from "./screens/HomeScreen";
+import ResetScreen from "./screens/resetScreen";
+import EventsScreen from './screens/eventsScreen';
 import ProfileScreen from "./screens/profileScreen";
+import RegisterScreen from "./screens/registerScreen";
 import { validateToken } from "./api/auth";
 
 const Stack = createStackNavigator();
@@ -69,9 +72,14 @@ function AppContent() {
           <>
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen name="Eventos" component={EventsScreen} />
           </>
         ) : (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="Reset" component={ResetScreen} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
