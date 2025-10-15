@@ -54,30 +54,18 @@ async function loginService(email, password, tipo) {
   return { token, user };
 }
 
-async function registerService(nome, dtNasc, email, senha, tipo, code) {
-  // já existe usuário com o mesmo email?
-  const [rows] = await pool.execute(
-    'SELECT * FROM usuarios WHERE email = ?',
-    [email]
-  );
+async function registerService(nome, dtNasc, email, senha, tipo, code, foto = null) {
+  const [rows] = await pool.execute('SELECT * FROM usuarios WHERE email = ?', [email]);
   if (rows.length > 0) {
-    return {
-      success: false,
-      message: 'Usuário já existe'
-    };
+    return { success: false, message: 'Usuário já existe' };
   }
 
-  // regras de cadastro
-  if (tipo === 'professor') {
-    if (code !== process.env.PROFESSOR_CODE) {
-      return { success: false, message: 'Código mestre de professor inválido' };
-    }
+  if (tipo === 'professor' && code !== process.env.PROFESSOR_CODE) {
+    return { success: false, message: 'Código mestre de professor inválido' };
   }
 
   if (tipo === 'aluno') {
-    if (!code) {
-      return { success: false, message: 'Código do professor é obrigatório' };
-    }
+    if (!code) return { success: false, message: 'Código do professor é obrigatório' };
 
     const [profRows] = await pool.execute(
       'SELECT * FROM professores WHERE codigo_professor = ?',
@@ -88,29 +76,26 @@ async function registerService(nome, dtNasc, email, senha, tipo, code) {
     }
   }
 
-  // cria usuário
   const hashedPassword = await bcrypt.hash(senha, 10);
   const [result] = await pool.execute(
-    'INSERT INTO usuarios (nome, data_nascimento, email, senha, tipo) VALUES (?, ?, ?, ?, ?)',
-    [nome, dtNasc, email, hashedPassword, tipo]
+    'INSERT INTO usuarios (nome, data_nascimento, email, senha, tipo, foto_perfil) VALUES (?, ?, ?, ?, ?, ?)',
+    [nome, dtNasc, email, hashedPassword, tipo, foto]
   );
 
   const usuarioId = result.insertId;
 
-  // se professor, insere em professores
   if (tipo === 'professor') {
-    const codigo_professor = uuidv4().split('-')[0]; // gera código único curto
+    const codigo_professor = uuidv4().split('-')[0];
     await pool.execute(
       'INSERT INTO professores (usuario_id, codigo_professor) VALUES (?, ?)',
       [usuarioId, codigo_professor]
     );
   }
 
-  // se aluno, insere em alunos
   if (tipo === 'aluno') {
     const [profRows] = await pool.execute(
       'SELECT id FROM professores WHERE codigo_professor = ?',
-      [professor_code]
+      [code]
     );
     const professorId = profRows[0].id;
 

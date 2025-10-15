@@ -17,7 +17,6 @@ CREATE TABLE usuarios (
   bio TEXT,
   foto_perfil VARCHAR(255),
   data_nascimento DATE,
-  genero ENUM('M','F','Outro'),
   nivel INT DEFAULT 1,
   pontos INT DEFAULT 0,
   criado_em TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,

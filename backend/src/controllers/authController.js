@@ -1,6 +1,10 @@
 const { loginService, registerService, resetService, resetConfirmService } = require('../services/authService');
 const dotenv = require('dotenv');
+
 dotenv.config();
+
+
+
 
 async function validate(req, res) {
   try {
@@ -41,54 +45,41 @@ async function login(req, res) {
 }
 
 async function register(req, res) {
-  const { schoolcode, classcode, nome, dtNasc, email, senha, tipo } = req.body;
+  console.log('Body recebido:', req.body);
+  console.log('File recebido:', req.file);
 
-  if (!nome || !dtNasc || !email || !senha || !tipo) {
+  if(!req.file){
     return res.status(400).json({
       success: false,
-      message: 'Nome, data de nascimento, email, senha e tipo são obrigatórios',
+      message: 'Foto é obrigatoria',
     });
   }
-
-  if(tipo == 'professor' && !schoolcode){
-    return res.status(400).json({
-      success: false,
-      message: 'Código mestre de professor é obrigatório',
-    });
-  }
-
-  if(tipo == 'aluno' && !classcode){
-    return res.status(400).json({
-      success: false,
-      message: 'Código do professor é obrigatório',
-    });
-  }
-
-  const code = tipo == 'aluno' ? classcode : (tipo == 'professor' ? schoolcode : null);
-
   try {
-    const response = await registerService(
-      nome,
-      dtNasc,
-      email,
-      senha,
-      tipo,
-      code
-    );
+    const { schoolcode, classcode, nome, dtNasc, email, senha, tipo } = req.body;
+    const foto = req.file ? `/uploads/profile/${req.file.filename}` : null;
+
+    if (!nome || !dtNasc || !email || !senha || !tipo ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nome, data de nascimento, email, senha e tipo são obrigatórios',
+      });
+    }
+
+    const code = tipo === 'aluno' ? classcode : tipo === 'professor' ? schoolcode : null;
+
+    const response = await registerService(nome, dtNasc, email, senha, tipo, code, foto);
 
     if (!response.success) {
       return res.status(400).json(response);
     }
 
-    return res.status(201).json(response);
+    res.status(201).json(response);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro no servidor',
-    });
+    res.status(500).json({ success: false, message: 'Erro no servidor' });
   }
 }
+
 
 async function reset(req, res) {
   const { email } = req.body;
@@ -131,4 +122,11 @@ async function resetConfirm(req, res) {
   }
 }
 
-module.exports = { register, login, reset,resetConfirm, validate };
+module.exports = {
+  register,
+  login,
+  reset,
+  resetConfirm,
+  validate,
+
+};
