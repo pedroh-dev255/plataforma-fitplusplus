@@ -35,17 +35,20 @@ async function login(email: string, senha: string, tipoUsuario: string) {
   }
 }
 
-async function register(schoolcode: string, classcode: string, name: string, email: string, password: string, tipo: string, dataNascimento?: string) {
+async function register(formData: FormData) {
+  console.log(formData);
   try {
-    const body: any = { schoolcode, classcode, nome: name, dtNasc: dataNascimento, email, senha: password, tipo };
-    const response = await api.post(`/api/auth/register`, body);
-    // backend deve retornar { token, user }
+    const response = await api.post(`/api/auth/register`, formData, {
+      headers: { 'Accept': 'application/json'},
+    });
+
+    // o Axios já faz o parse automático
     return response.data;
   } catch (err) {
     if (err && typeof err === "object" && "response" in err && err.response && typeof err.response === "object" && "data" in err.response) {
         throw (err as any).response.data;
     } else {
-        throw { message: "Erro ao conectar ao servidor" };
+        throw { message: "Erro ao conectar ao servidor "+ err };
     }
   }
 }

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ImageBackground, Platform } from 'react-native';
 // DateTimePicker: install with `npm install @react-native-community/datetimepicker` if missing
 const DateTimePicker: any = require('@react-native-community/datetimepicker').default;
+import { launchImageLibrary, launchCamera, ImageLibraryOptions, CameraOptions } from 'react-native-image-picker';
 import { Picker } from "@react-native-picker/picker";
 import { register } from '../api/auth';
 import { useAuth } from '../components/AuthContext';
@@ -12,6 +13,7 @@ export default function RegisterScreen() {
   const [dtNasc, setDtNasc] = useState('');
   const [dtNascDate, setDtNascDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [photo, setPhoto] = useState('');
   const [email, setEmail] = useState('');
   const [schoolCode, setSchoolCode] = useState('');
   const [classeCode, setClasseCode] = useState('');
@@ -21,6 +23,7 @@ export default function RegisterScreen() {
   const navigation = useNavigation<any>();
 
   const handleRegister = async () => {
+    if (!photo) return Alert.alert('Erro', 'Selecione uma foto');
     if (!tipoUsuario) return Alert.alert('Erro', 'Selecione o tipo de usuário');
     if (!name.trim() || !email.trim() || !password || !password2) return Alert.alert('Erro', 'Preencha todos os campos');
     if (password !== password2) return Alert.alert('Erro', 'Senhas não conferem');
@@ -50,13 +53,45 @@ export default function RegisterScreen() {
 
       const dataNascimento = formatDt(dtNasc);
 
-      const res = await register(schoolCode, classeCode, name, email, password, tipoUsuario, dataNascimento);
+      const formData = new FormData();
+      formData.append('schoolcode', schoolCode);
+      formData.append('classcode', classeCode);
+      formData.append('nome', name);
+      formData.append('email', email);
+      formData.append('senha', password);
+      formData.append('tipo', tipoUsuario);
+      formData.append('dtNasc', dataNascimento);
+
+      if (photo) {
+        const filename = photo.split('/').pop();
+        const ext = filename?.split('.').pop();
+        const mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : 'image/png';
+
+        formData.append('photo', {
+          uri: photo,
+          name: filename || 'photo.jpg',
+          type: mimeType,
+        });
+      }
+
+      const res = await register(formData);
       if (!res) throw new Error('Erro no cadastro');
+
 
       Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
       navigation.navigate('Login');
     } catch (err: any) {
       Alert.alert('Erro', err?.message || 'Falha no cadastro');
+    }
+  };
+
+  const pickImageFromLibrary = async () => {
+    const options: ImageLibraryOptions = { mediaType: 'photo', quality: 0.8 };
+    const resp = await launchImageLibrary(options);
+    if (resp.didCancel) return;
+    const asset = resp.assets && resp.assets[0];
+    if (asset?.uri) {
+      setPhoto(asset.uri);
     }
   };
 
@@ -76,6 +111,15 @@ export default function RegisterScreen() {
             <Picker.Item label="Aluno" value="aluno" color="#141414ff"/>
             <Picker.Item label="Praticante" value="praticante" color="#141414ff"/>
           </Picker>
+        </View>
+        {photo && (
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Text style={{color: "#b0c4de"}}>{photo}</Text>
+          </View>
+        )}
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          
+          <TouchableOpacity style={styles.input} onPress={pickImageFromLibrary}><Text style={{ color: '#fff' }}>Escolher Imagem</Text></TouchableOpacity>
         </View>
         {tipoUsuario === "aluno" && (
           <TextInput
