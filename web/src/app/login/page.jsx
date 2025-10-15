@@ -131,6 +131,7 @@ const LoginScreen = () => {
 
       setShowResetModal(false);
       showAlert("Código de redefinição enviado para o email.", "success");
+      setTimeout(() => router.push("/reset"), 1500);
     } catch (err) {
       showAlert(err.message || "Erro ao solicitar código", "error");
     }

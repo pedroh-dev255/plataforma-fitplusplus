@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Modal, FlatList, Alert, Platform, Share } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../components/AuthContext';
+import NotificationHandler from '../components/NotificationHandler';
+import NotificationIcon from '../components/NotificationIcon';
 import Toast from 'react-native-toast-message';
-import { launchImageLibrary, launchCamera, ImageLibraryOptions, CameraOptions } from 'react-native-image-picker';
-import { updateProfile } from '../api/profile';
-import { API_URL } from '../config';
 import { useNavigation } from '@react-navigation/native';
 
 type Turma = {
@@ -25,7 +24,6 @@ export default function ProfileScreen() {
   const { user, setUser } = useAuth();
   const navigation = useNavigation<any>();
   // modal-based edit flow
-  const [showEditModal, setShowEditModal] = useState(false);
   const [name, setName] = useState(user?.nome || '');
   const [photo, setPhoto] = useState(user?.foto_perfil || '');
   const [dtNascDate, setDtNascDate] = useState<Date | null>(null);
@@ -37,6 +35,7 @@ export default function ProfileScreen() {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [showTurmaModal, setShowTurmaModal] = useState(false);
   const [showEventoModal, setShowEventoModal] = useState(false);
+  const [showAlunosModal, setAlunosModal] = useState(false);
   const [newTurmaNome, setNewTurmaNome] = useState('');
   const [newTurmaDescricao, setNewTurmaDescricao] = useState('');
   const [newEventoTitulo, setNewEventoTitulo] = useState('');
@@ -72,42 +71,7 @@ export default function ProfileScreen() {
     })();
   }, [user]);
 
-  const saveProfile = async () => {
-    if (!name.trim()) return Toast.show({ type: 'error', text1: 'Nome obrigatório' });
-    try {
-      const token = await AsyncStorage.getItem('token');
-      const body: any = { nome: name.trim() };
-      if (photo && !photo.startsWith('http')) body.photoUri = photo;
-      if (dtNascDate) body.data_nascimento = dtNascDate.toISOString();
-      const res = await updateProfile(token, body);
-      const updated = res?.user ? res.user : { ...user, nome: name.trim(), foto_perfil: photo, data_nascimento: dtNascDate ? dtNascDate.toISOString() : user?.data_nascimento };
-      await AsyncStorage.setItem('userData', JSON.stringify(updated));
-      setUser(updated);
-      setShowEditModal(false);
-      Toast.show({ type: 'success', text1: 'Perfil atualizado' });
-    } catch (err: any) {
-      console.warn('updateProfile error', err);
-      Toast.show({ type: 'error', text1: 'Falha ao atualizar perfil' });
-    }
-  };
 
-  const pickImageFromLibrary = async () => {
-    const options: ImageLibraryOptions = { mediaType: 'photo', quality: 0.8 };
-    const resp = await launchImageLibrary(options);
-    if (resp.didCancel) return;
-    const asset = resp.assets && resp.assets[0];
-    if (asset?.uri) {
-      setPhoto(asset.uri);
-    }
-  };
-
-  const takePhoto = async () => {
-    const options: CameraOptions = { mediaType: 'photo', quality: 0.8 };
-    const resp = await launchCamera(options);
-    if (resp.didCancel) return;
-    const asset = resp.assets && resp.assets[0];
-    if (asset?.uri) setPhoto(asset.uri);
-  };
 
   // try to load clipboard module if available
   let ClipboardModule: any = null;
@@ -165,24 +129,6 @@ export default function ProfileScreen() {
     DateTimePicker = null;
   }
 
-  const openEditModal = () => {
-    setName(user?.nome || '');
-    setPhoto(user?.foto_perfil || '');
-    if (user?.data_nascimento) {
-      const d = new Date(user.data_nascimento);
-      if (!isNaN(d.getTime())) {
-        setDtNascDate(d);
-        setDtNasc(`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`);
-      } else {
-        setDtNascDate(null);
-        setDtNasc('');
-      }
-    } else {
-      setDtNascDate(null);
-      setDtNasc('');
-    }
-    setShowEditModal(true);
-  };
 
   const handleAddEvento = async () => {
     if (!newEventoTitulo.trim()) return Toast.show({ type: 'error', text1: 'Título do evento obrigatório' });
@@ -203,6 +149,13 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
+      <NotificationHandler/>
+      <View style={{ position: 'absolute', top: 50, right: 15, zIndex: 5 }}>
+        <NotificationIcon />
+      </View>
+      <View style={styles.toastContainer} pointerEvents="box-none">
+        <Toast />
+      </View>
       <View style={{ flexDirection: 'row', alignItems: 'center'}}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
           <Text style={{ color: '#fff' }}>◀ Voltar</Text>
@@ -223,23 +176,41 @@ export default function ProfileScreen() {
             <Text style={styles.code}>Código de Professor: {user.codigo_professor}</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.editBtn} onPress={() => setShowEditModal(true)}>
-          <Text style={{ color: '#fff' }}>Editar</Text>
-        </TouchableOpacity>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Biografia</Text>
-        <Text style={[styles.value, { opacity: 0.8 }]}>{user.bio}</Text>
-        {/* edits happen inside modal */}
-      </View>
 
       {user.tipo === 'professor' && (
-        <View style={styles.card}>
-          <Text>Meus Alunos</Text>
-          
+        <View style={styles.trainCards}>
+          <TouchableOpacity onPress={() => setAlunosModal(true)} style={styles.trainCard}>
+            <View >
+              <Image source={require('../assets/alunos.png')} style={styles.trainImage} />
+              <Text style={styles.trainTitle}>Alunos</Text>
+              <Text style={styles.trainDesc}>Meus alunos</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.trainCard}>
+            <View >
+              <Image source={require('../assets/forum.png')} style={styles.trainImage} />
+              <Text style={styles.trainTitle}>Forum</Text>
+              <Text style={styles.trainDesc}>asd</Text>
+               
+              
+            </View>
+          </TouchableOpacity>
         </View>
       )}
+
+      <Modal visible={showAlunosModal} animationType='fade' transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Alunos</Text>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <TouchableOpacity style={styles.modalBtn} onPress={() => setAlunosModal(false)}><Text>fechar</Text></TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Modal criar turma */}
       <Modal visible={showTurmaModal} animationType="slide" transparent>
@@ -271,53 +242,14 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
-
-      {/* Edit Profile Modal */}
-      <Modal visible={showEditModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Editar perfil</Text>
-            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Nome" placeholderTextColor="#b0c4de" />
-            <TextInput style={styles.input} value={user?.bio || ''} onChangeText={() => {}} placeholder="Biografia" placeholderTextColor="#b0c4de" />
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <TouchableOpacity style={styles.smallBtn} onPress={pickImageFromLibrary}><Text style={{ color: '#fff' }}>Escolher Imagem</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.smallBtn} onPress={takePhoto}><Text style={{ color: '#fff' }}>Tirar Foto</Text></TouchableOpacity>
-            </View>
-            <TouchableOpacity style={[styles.input, { justifyContent: 'center' }]} onPress={() => setShowDatePicker(true)}>
-              <Text style={{ color: dtNascDate ? '#fff' : '#b0c4de' }}>{dtNascDate ? `${String(dtNascDate.getDate()).padStart(2,'0')}/${String(dtNascDate.getMonth()+1).padStart(2,'0')}/${dtNascDate.getFullYear()}` : 'Data de Nascimento'}</Text>
-            </TouchableOpacity>
-            {showDatePicker && DateTimePicker && (
-              <DateTimePicker
-                value={dtNascDate || new Date(2000,0,1)}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                maximumDate={new Date()}
-                onChange={(event: any, selectedDate?: Date) => {
-                  setShowDatePicker(Platform.OS === 'ios');
-                  if (selectedDate) {
-                    setDtNascDate(selectedDate);
-                    const formatted = `${String(selectedDate.getDate()).padStart(2,'0')}/${String(selectedDate.getMonth()+1).padStart(2,'0')}/${selectedDate.getFullYear()}`;
-                    setDtNasc(formatted);
-                  }
-                }}
-              />
-            )}
-
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 }}>
-              <TouchableOpacity style={styles.modalBtn} onPress={() => setShowEditModal(false)}><Text>Cancelar</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.modalBtnPrimary} onPress={saveProfile}><Text style={{ color: '#fff' }}>Salvar</Text></TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a1f3c', padding: 16, paddingTop: 60 },
+  container: { flex: 1, backgroundColor: '#1b3c6bff', padding: 16, paddingTop: 60 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  headerArea: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  headerArea: { paddingTop: 20,flexDirection: 'row', alignItems: 'center', marginBottom: 150 },
   avatarWrap: { marginRight: 12 },
   avatar: { width: 80, height: 80, borderRadius: 40 },
   avatarPlaceholder: { backgroundColor: '#004a99', alignItems: 'center', justifyContent: 'center' },
@@ -325,7 +257,7 @@ const styles = StyleSheet.create({
   code: { color: '#cfe8ff', fontSize: 12 },
   editBtn: { backgroundColor: '#007bff', padding: 8, borderRadius: 8 },
   /* dark translucent card used across screens */
-  card: { backgroundColor: 'rgba(0, 39, 83, 0.9)', borderRadius: 12, padding: 12, marginBottom: 12 },
+  card:  { color: "#cfe8ff", backgroundColor: 'rgba(164, 193, 204, 0.9)', borderRadius: 12, padding: 12, marginBottom: 12, width: 150, height: 150 },
   label: { color: '#cfe8ff', marginTop: 8 },
   value: { color: '#fff', fontSize: 16, marginTop: 4 },
   input: { backgroundColor: 'rgba(255,255,255,0.08)', color: '#fff', padding: 10, borderRadius: 8, marginTop: 6 },
@@ -335,8 +267,23 @@ const styles = StyleSheet.create({
   smallBtn: { backgroundColor: '#007bff', padding: 8, borderRadius: 8, alignSelf: 'flex-start', marginBottom: 8 },
   listRow: { padding: 8, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.04)', marginBottom: 6 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: 'rgba(10,31,60,0.95)', borderRadius: 12, padding: 16 },
+  modalCard: { backgroundColor: 'rgba(10,31,60,0.95)', borderRadius: 12, padding: 16, color: '#fff' },
   modalTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, color: '#fff' },
-  modalBtn: { padding: 10 },
-  modalBtnPrimary: { padding: 10, backgroundColor: '#007bff', borderRadius: 8 },
+  modalBtn: { padding: 10, color: '#fff'},
+  modalBtnPrimary: {color: '#fff', padding: 10, backgroundColor: '#007bff', borderRadius: 8 },
+  toastContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    elevation: 1000,
+    // assegura que toasts não bloqueiem toques em elementos abaixo
+    pointerEvents: 'box-none',
+  },
+  trainCards: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+  trainCard: { flex: 1, backgroundColor: 'rgba(12, 61, 131, 0.97)', borderRadius: 16, padding: 15, marginHorizontal: 5, position: 'relative' },
+  trainImage: { width: 80, height: 80, borderRadius: 12, marginBottom: 10 },
+  trainTitle: { fontWeight: 'bold', fontSize: 16, color: '#fff', marginBottom: 5 },
+  trainDesc: { color: '#fff', fontSize: 12 },
 });

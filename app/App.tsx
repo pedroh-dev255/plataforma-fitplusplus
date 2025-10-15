@@ -22,6 +22,8 @@ import ResetScreen from "./screens/resetScreen";
 import EventsScreen from './screens/eventsScreen';
 import ProfileScreen from "./screens/profileScreen";
 import RegisterScreen from "./screens/registerScreen";
+import BodyMappingScreen from './screens/BodyMappingScreen';
+
 import { validateToken } from "./api/auth";
 
 const Stack = createStackNavigator();
@@ -77,8 +79,9 @@ function AppContent() {
         ) : (
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
-              <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
             <Stack.Screen name="Reset" component={ResetScreen} />
+            <Stack.Screen name="BodyMapping" component={BodyMappingScreen} />
           </>
         )}
       </Stack.Navigator>

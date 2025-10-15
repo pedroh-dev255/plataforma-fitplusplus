@@ -4,7 +4,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from 'react-native-toast-message';
 import NotificationHandler from '../components/NotificationHandler';
 import NotificationIcon from '../components/NotificationIcon';
-import FloatingMenu from '../components/FloatingMenu';
 import { useAuth } from '../components/AuthContext';
 import { fetchEvents } from '../api/events';
 import { useNavigation } from '@react-navigation/native';
@@ -50,26 +49,6 @@ export default function EventsScreen() {
     return true;
   });
 
-  let actions = [];
-  if (user && user.tipo === 'professor'){
-    actions = [
-      { text: "Perfil", icon: require("../assets/perfil.png"), name: "bt_perfil", position: 1 },
-      { text: "Eventos", icon: require("../assets/evento.png"), name: "bt_eventos", position: 2 },
-      { text: "Logout", icon: require("../assets/icon.png"), name: "bt_logout", position: 3 },
-    ];
-  } else if (user && user.tipo === 'aluno'){
-    actions = [
-      { text: "Perfil", icon: require("../assets/perfil.png"), name: "bt_perfil", position: 1 },
-      { text: "Eventos", icon: require("../assets/evento.png"), name: "bt_eventos", position: 2 },
-      { text: "Logout", icon: require("../assets/icon.png"), name: "bt_logout", position: 3 },
-    ];
-  } else {
-    actions = [
-      { text: "Perfil", icon: require("../assets/perfil.png"), name: "bt_perfil", position: 1 },
-      { text: "Logout", icon: require("../assets/icon.png"), name: "bt_logout", position: 2 },
-    ];
-  }
-
   return (
     <View style={styles.container}>
       <NotificationHandler />
@@ -79,6 +58,11 @@ export default function EventsScreen() {
 
       <View style={styles.toastContainer} pointerEvents="box-none">
         <Toast />
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center'}}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
+          <Text style={{ color: '#fff' }}>◀ Voltar</Text>
+        </TouchableOpacity>
       </View>
 
       {/* 📅 Filtro por data de início */}
@@ -148,29 +132,6 @@ export default function EventsScreen() {
             Nenhum evento encontrado.
           </Text>
         }
-      />
-      <FloatingMenu
-        actions={actions}
-        color="#007bff"
-        floatingIcon={require("../assets/icon.png")}
-        iconHeight={100}
-        iconWidth={100}
-        onPressItem={async (name) => {
-          if (name === 'bt_perfil') {
-            navigation.navigate('Profile');
-          }
-          if (name === 'bt_eventos'){
-            navigation.navigate('Eventos');
-          }
-
-          if (name === 'bt_logout') {
-            await AsyncStorage.removeItem('token');
-            await AsyncStorage.removeItem('userData');
-            setUser(null);
-            // reset navigation stack and go to Login
-            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
-          }
-        }}
       />
     </View>
   );

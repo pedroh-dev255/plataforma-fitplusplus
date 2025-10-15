@@ -43,6 +43,7 @@ async function register(formData: FormData) {
     });
 
     // o Axios já faz o parse automático
+    console.log(response)
     return response.data;
   } catch (err) {
     if (err && typeof err === "object" && "response" in err && err.response && typeof err.response === "object" && "data" in err.response) {

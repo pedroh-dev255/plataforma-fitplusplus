@@ -17,12 +17,38 @@ CREATE TABLE usuarios (
   bio TEXT,
   foto_perfil VARCHAR(255),
   data_nascimento DATE,
+  lesao BOOLEAN not null,
   nivel INT DEFAULT 1,
   pontos INT DEFAULT 0,
   criado_em TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 select * from usuarios;
+
+alter TABLE usuarios
+  add COLUMN lesao BOOLEAN not null;
+-- -----------------------------------------------------
+-- Tabela: Lesões
+-- -----------------------------------------------------
+CREATE TABLE lesoes (
+  id int NOT NULL AUTO_INCREMENT,
+  id_usuario int not null,
+  cabeca      BOOLEAN,
+  pescoco     BOOLEAN,
+  ombros      BOOLEAN,
+  peito       BOOLEAN,
+  bracos      BOOLEAN,
+  torco       BOOLEAN,
+  maos        BOOLEAN,
+  pernas      BOOLEAN,
+  joelho      BOOLEAN,
+  panturrilha BOOLEAN,
+  pes         BOOLEAN,
+
+  PRIMARY KEY(id),
+  Foreign Key (id_usuario) REFERENCES usuarios(id)
+);
+
 -- -----------------------------------------------------
 -- Tabela: Redefinição de senhas
 -- -----------------------------------------------------
@@ -105,12 +131,14 @@ CREATE TABLE eventos (
   longitude DECIMAL(11,8),
   data_hora DATETIME NOT NULL,
   max_participantes INT DEFAULT NULL,
+  tipo ENUM('publico','particular') DEFAULT 'publico',
   status ENUM('aberto','fechado','cancelado') DEFAULT 'aberto',
   PRIMARY KEY (id),
   FOREIGN KEY (criador_id) REFERENCES usuarios (id),
   FOREIGN KEY (esporte_id) REFERENCES esportes (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
+alter table eventos
+  add COLUMN tipo ENUM('publico','particular') DEFAULT 'publico';
 drop table eventos;
 drop table evento_participantes;
 -- -----------------------------------------------------
@@ -120,7 +148,6 @@ CREATE TABLE evento_participantes (
   id INT NOT NULL AUTO_INCREMENT,
   evento_id INT NOT NULL,
   usuario_id INT NOT NULL,
-  status ENUM('confirmado','pendente','recusado') DEFAULT 'pendente',
   PRIMARY KEY (id),
   CONSTRAINT fk_evento_participante_evento FOREIGN KEY (evento_id)
     REFERENCES eventos (id),

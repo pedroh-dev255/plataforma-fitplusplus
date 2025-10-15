@@ -54,7 +54,7 @@ async function loginService(email, password, tipo) {
   return { token, user };
 }
 
-async function registerService(nome, dtNasc, email, senha, tipo, code, foto = null) {
+async function registerService(nome, dtNasc, email, senha, tipo, code, lesoes) {
   const [rows] = await pool.execute('SELECT * FROM usuarios WHERE email = ?', [email]);
   if (rows.length > 0) {
     return { success: false, message: 'Usuário já existe' };
@@ -75,14 +75,21 @@ async function registerService(nome, dtNasc, email, senha, tipo, code, foto = nu
       return { success: false, message: 'Professor não encontrado' };
     }
   }
-
+  var lesao;
+  if(lesoes == null){
+    lesao = false;
+  } else{
+    lesao = true
+  }
   const hashedPassword = await bcrypt.hash(senha, 10);
   const [result] = await pool.execute(
-    'INSERT INTO usuarios (nome, data_nascimento, email, senha, tipo, foto_perfil) VALUES (?, ?, ?, ?, ?, ?)',
-    [nome, dtNasc, email, hashedPassword, tipo, foto]
+    'INSERT INTO usuarios (nome, data_nascimento, email, senha, tipo, lesao) VALUES (?, ?, ?, ?, ?, ?)',
+    [nome, dtNasc, email, hashedPassword, tipo, lesao]
   );
 
   const usuarioId = result.insertId;
+
+  
 
   if (tipo === 'professor') {
     const codigo_professor = uuidv4().split('-')[0];
@@ -105,7 +112,7 @@ async function registerService(nome, dtNasc, email, senha, tipo, code, foto = nu
     );
   }
 
-  return { success: true, message: 'Usuário criado com sucesso' };
+  return { success: true, message: 'Usuário criado com sucesso', userId:  usuarioId};
 }
 
 async function resetService(email) {

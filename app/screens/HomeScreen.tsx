@@ -7,7 +7,6 @@ import NotificationPrompt from '../components/notifyComponent';
 import NotificationHandler from '../components/NotificationHandler';
 import NotificationIcon from '../components/NotificationIcon';
 import Toast from 'react-native-toast-message';
-import FloatingMenu from '../components/FloatingMenu';
 import { useAuth } from '../components/AuthContext';
 import { API_URL } from '../config';
 import { fetchEvents } from '../api/events';
@@ -36,65 +35,77 @@ export default function HomeScreen() {
   // renderiza os próximos eventos nos próximos 7 dias
   const renderNextEvents = () => {
     if (events.length === 0) {
-      return <Text style={{ color: '#fff', textAlign: 'center', marginBottom: 20 }}>Nenhum evento próximo.</Text>;
+      return (
+        <Text style={{ color: '#fff', textAlign: 'center', marginBottom: 20 }}>
+          Nenhum evento próximo.
+        </Text>
+      );
     }
+
     const now = new Date();
     const weekLater = new Date();
     weekLater.setDate(now.getDate() + 7);
 
     const upcoming = events.filter(ev => {
       const evDate = new Date(ev.data_hora);
-      return (
-        evDate.getTime() >= now.getTime() &&
-        evDate.getTime() <= weekLater.getTime()
-      );
+      return evDate >= now && evDate <= weekLater;
     });
 
-    console.log(upcoming)
     if (upcoming.length === 0) {
-      return <Text style={{ color: '#fff', textAlign: 'center', marginBottom: 20 }}>Nenhum evento próximo.</Text>;
+      return (
+        <Text style={{ color: '#fff', textAlign: 'center', marginBottom: 20 }}>
+          Nenhum evento nos próximos dias.
+        </Text>
+      );
     }
+
     return upcoming.map(ev => {
       const evDate = new Date(ev.data_hora);
-      const dateStr = evDate.toLocaleDateString();
+
+      // ✅ Formata a data manualmente em dd/mm/yyyy
+      const dateStr = evDate.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+
       const timeStr = evDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // ✅ Verifica se é o mesmo dia
+      const isToday =
+        evDate.getDate() === now.getDate() &&
+        evDate.getMonth() === now.getMonth() &&
+        evDate.getFullYear() === now.getFullYear();
+
       return (
         <View key={ev.id} style={styles.card}>
           <Text style={styles.cardTitle}>{ev.titulo}</Text>
           {ev.descricao ? <Text style={styles.workoutInfo}>{ev.descricao}</Text> : null}
+
           <View style={styles.nextWorkout}>
-            <View style={styles.workoutBadge}>
-              <Text style={{ color: '#fff', fontWeight: 'bold' }}>{dateStr} às {timeStr}</Text>
+            <View
+              style={[
+                styles.workoutBadge,
+                { backgroundColor: isToday ? '#cfb000ff' : '#007bff' },
+              ]}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold' }}>
+                {dateStr} às {timeStr}
+              </Text>
             </View>
-            <TouchableOpacity style={styles.acceptBtn} onPress={() => navigation.navigate('Eventos')}>
+
+            <TouchableOpacity
+              style={styles.acceptBtn}
+              onPress={() => navigation.navigate('Eventos')}
+            >
               <Text style={{ color: '#007bff' }}>Ver detalhes</Text>
             </TouchableOpacity>
           </View>
-          
         </View>
       );
     });
-  }
-  // ações do menu flutuante
-  let actions = [];
-  if (user && user.tipo === 'professor'){
-    actions = [
-      { text: "Perfil", icon: require("../assets/perfil.png"), name: "bt_perfil", position: 1 },
-      { text: "Eventos", icon: require("../assets/evento.png"), name: "bt_eventos", position: 2 },
-      { text: "Logout", icon: require("../assets/icon.png"), name: "bt_logout", position: 3 },
-    ];
-  } else if (user && user.tipo === 'aluno'){
-    actions = [
-      { text: "Perfil", icon: require("../assets/perfil.png"), name: "bt_perfil", position: 1 },
-      { text: "Eventos", icon: require("../assets/evento.png"), name: "bt_eventos", position: 2 },
-      { text: "Logout", icon: require("../assets/icon.png"), name: "bt_logout", position: 3 },
-    ];
-  } else {
-    actions = [
-      { text: "Perfil", icon: require("../assets/perfil.png"), name: "bt_perfil", position: 1 },
-      { text: "Logout", icon: require("../assets/icon.png"), name: "bt_logout", position: 2 },
-    ];
-  }
+  };
+
 
   return (
     <View style={styles.container}>
@@ -124,70 +135,25 @@ export default function HomeScreen() {
         <Text style={styles.title}>Proximos eventos</Text>
         {renderNextEvents()}
 
-
-        {/* Cards de progresso */}
-        <View style={styles.progressCard}>
-          <Text style={styles.progressText}>36</Text>
-          <Text style={styles.progressLabel}>Sem falhar</Text>
-          <Text style={styles.progressInfo}>Mantenha seu progresso!</Text>
-        </View>
-
-        {/* Cards de treino 
         <View style={styles.trainCards}>
-          <View style={styles.trainCard}>
-            <Image source={require('../assets/icon-notify.png')} style={styles.trainImage} />
-            <Text style={styles.trainTitle}>Saia da rotina</Text>
-            <Text style={styles.trainDesc}>Duas composições de treino para você variar seus estímulos</Text>
-            <TouchableOpacity style={styles.arrowBtn}>
-              <Text style={{ fontSize: 18 }}>→</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.trainCard}>
-            <Image source={require('../assets/icon-notify.png')} style={styles.trainImage} />
-            <Text style={styles.trainTitle}>Performance</Text>
-            <Text style={styles.trainDesc}>Melhore seu desempenho nos treinos</Text>
-            <TouchableOpacity style={styles.arrowBtn}>
-              <Text style={{ fontSize: 18 }}>→</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity onPress={() => navigation.navigate('Eventos')} style={styles.trainCard}>
+            <View >
+              <Image source={require('../assets/evento.png')} style={styles.trainImage} />
+              <Text style={styles.trainTitle}>Eventos</Text>
+              <Text style={styles.trainDesc}>Visualize seus eventos e busque por novos</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.trainCard}>
+            <View >
+              <Image source={require('../assets/forum.png')} style={styles.trainImage} />
+              <Text style={styles.trainTitle}>Forum</Text>
+              <Text style={styles.trainDesc}>Converse com alunos professores e praticantes</Text>
+               
+              
+            </View>
+          </TouchableOpacity>
         </View>
-
-        {/* Feedbacks
-        <Text style={styles.sectionTitle}>Feedbacks</Text>
-        <View style={styles.feedbackCard}>
-          <Image source={require('../assets/perfil.png')} style={styles.feedbackAvatar} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.feedbackStars}>⭐⭐⭐⭐☆</Text>
-            <Text style={styles.feedbackPos}>Positivos: Vem se dedicando cada dia mais.</Text>
-            <Text style={styles.feedbackNeg}>Negativos: Precisa concluir o set de exercícios.</Text>
-            <Text style={styles.feedbackDate}>Set 22, 2025</Text>
-          </View>
-        </View>*/}
       </ScrollView> 
-
-      <FloatingMenu
-        actions={actions}
-        color="#007bff"
-        floatingIcon={require("../assets/icon.png")}
-        iconHeight={100}
-        iconWidth={100}
-        onPressItem={async (name) => {
-          if (name === 'bt_perfil') {
-            navigation.navigate('Profile');
-          }
-          if (name === 'bt_eventos'){
-            navigation.navigate('Eventos');
-          }
-
-          if (name === 'bt_logout') {
-            await AsyncStorage.removeItem('token');
-            await AsyncStorage.removeItem('userData');
-            setUser(null);
-            // reset navigation stack and go to Login
-            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
-          }
-        }}
-      />
     </View>
   );
 }
@@ -226,11 +192,10 @@ const styles = StyleSheet.create({
   progressInfo: { color: '#fff', marginTop: 5 },
 
   trainCards: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-  trainCard: { flex: 1, backgroundColor: 'rgba(10,31,60,0.9)', borderRadius: 16, padding: 15, marginHorizontal: 5, position: 'relative' },
-  trainImage: { width: '100%', height: 80, borderRadius: 12, marginBottom: 10 },
+  trainCard: { flex: 1, backgroundColor: 'rgba(12, 61, 131, 0.97)', borderRadius: 16, padding: 15, marginHorizontal: 5, position: 'relative' },
+  trainImage: { width: 80, height: 80, borderRadius: 12, marginBottom: 10 },
   trainTitle: { fontWeight: 'bold', fontSize: 16, color: '#fff', marginBottom: 5 },
   trainDesc: { color: '#fff', fontSize: 12 },
-  arrowBtn: { position: 'absolute', bottom: 10, right: 10, backgroundColor: '#fff', width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
 
   sectionTitle: { color: '#fff', fontWeight: 'bold', fontSize: 16, marginBottom: 10 },
   feedbackCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 16, padding: 10, marginBottom: 10, alignItems: 'flex-start' },

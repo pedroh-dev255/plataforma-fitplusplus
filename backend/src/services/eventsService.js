@@ -8,7 +8,7 @@ async function getAllEventsService( dtinicio, dtfim) {
                 `SELECT *
                 FROM evento_participantes as ep
                     JOIN eventos as e ON ep.evento_id = e.id
-                    WHERE  AND e.data_hora >= NOW`
+                    WHERE  AND e.data_hora >= NOW()`
             );
             return rows;
         } 
@@ -34,14 +34,23 @@ async function getAllEventsService( dtinicio, dtfim) {
 }
 
 async function getEventsService(userId, dtinicio, dtfim) {
+    //console.log('eventos')
     try {
         if(!dtinicio || !dtfim) {
 
             const [rows] = await pool.execute(
-                `SELECT *
-                FROM evento_participantes as ep
-                    JOIN eventos as e ON ep.evento_id = e.id
-                    WHERE ep.usuario_id = ? AND e.data_hora >= NOW`,
+                `SELECT
+                        *
+                    FROM
+                        evento_participantes AS ep
+                    JOIN
+                        eventos AS e
+                        ON ep.evento_id = e.id
+                    WHERE
+                        ep.usuario_id = ?
+                        AND e.data_hora >= NOW()
+                    ORDER BY
+                        e.data_hora ASC;`,
                 [userId]
             );
             return rows;
@@ -50,7 +59,7 @@ async function getEventsService(userId, dtinicio, dtfim) {
             `SELECT *
             FROM evento_participantes as ep
                 JOIN eventos as e ON ep.evento_id = e.id
-                WHERE ep.usuario_id = ? AND e.data_hora BETWEEN ? AND ?`,
+                WHERE ep.usuario_id = ? AND e.data_hora BETWEEN ? AND ? ORDER ASC data_hora`,
             [userId, dtinicio, dtfim]
         );
 
@@ -60,7 +69,7 @@ async function getEventsService(userId, dtinicio, dtfim) {
         return rows;
         
     } catch (error) {
-
+        console.log('erro ao buscar enventos: '+error)
         throw new Error("Erro ao buscar eventos: " + error.message);
         
     }

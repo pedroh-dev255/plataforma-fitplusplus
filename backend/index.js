@@ -6,6 +6,7 @@ const path = require('path');
 const auth = require('./src/routes/authRoute');
 const notify = require('./src/routes/notifyRoute');
 const events = require('./src/routes/eventsRoute');
+const teacher = require('./src/routes/teacherRoute')
 
 
 dotenv.config();
@@ -26,6 +27,7 @@ app.use(cors({
 app.use('/api/auth', auth);
 app.use('/api/notify', notify);
 app.use('/api/events', events);
+app.use('/api/teacher', teacher);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

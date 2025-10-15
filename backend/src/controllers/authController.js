@@ -45,18 +45,9 @@ async function login(req, res) {
 }
 
 async function register(req, res) {
-  console.log('Body recebido:', req.body);
-  console.log('File recebido:', req.file);
-
-  if(!req.file){
-    return res.status(400).json({
-      success: false,
-      message: 'Foto é obrigatoria',
-    });
-  }
+  console.log(req.body)
   try {
-    const { schoolcode, classcode, nome, dtNasc, email, senha, tipo } = req.body;
-    const foto = req.file ? `/uploads/profile/${req.file.filename}` : null;
+    const { schoolcode, classcode, nome, dtNasc, email, senha, tipo, lesoes } = req.body;
 
     if (!nome || !dtNasc || !email || !senha || !tipo ) {
       return res.status(400).json({
@@ -67,7 +58,7 @@ async function register(req, res) {
 
     const code = tipo === 'aluno' ? classcode : tipo === 'professor' ? schoolcode : null;
 
-    const response = await registerService(nome, dtNasc, email, senha, tipo, code, foto);
+    const response = await registerService(nome, dtNasc, email, senha, tipo, code, lesoes);
 
     if (!response.success) {
       return res.status(400).json(response);
