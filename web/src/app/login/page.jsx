@@ -119,7 +119,7 @@ const LoginScreen = () => {
     const showAlert = useCallback((message, type) => {
         setNotification({ message, type });
     }, []);
-    const { setUser } = useAuth();
+    const { setUser, setToken } = useAuth();
     const handleLogin = async () => {
         if (!email || !senha || !tipoUsuario) {
             return showAlert("Preencha todos os campos, incluindo o Tipo de Usuário.", 'error');
@@ -135,11 +135,12 @@ const LoginScreen = () => {
               localStorage.setItem("userData", JSON.stringify(user));
               localStorage.setItem("token", token);
               setUser(user);
+              setToken(token);
               showAlert(`Bem-vindo, ${user.nome}!`, 'success');
-              //router.push('/');
+              router.push('/');
+            }else{
+              showAlert(res.message || "Falha no login", 'error');
             }
-            
-           showAlert(res.message || "Falha no login", 'error');
 
         } catch (err) {
             showAlert(err.message || "Falha no login", 'error');

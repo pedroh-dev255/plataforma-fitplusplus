@@ -133,7 +133,6 @@ export default function HomePage() {
             </h2>
             <p className="text-sm text-gray-200">{user?.tipo || "Aluno"}</p>
           </div>
-          <button onClick={logout}>Deslogar</button>
         </div>
 
         {/* Próximos eventos */}
@@ -161,7 +160,10 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="bg-blue-800/90 rounded-2xl p-5 hover:scale-[1.02] transition-all cursor-pointer">
+          <div
+            onClick={() => router.push("/forum")}
+            className="bg-blue-800/90 rounded-2xl p-5 hover:scale-[1.02] transition-all cursor-pointer"
+          >
             <Image
               src="/forum.png"
               alt="Fórum"

@@ -18,7 +18,9 @@ const validateToken = async (token) => {
 
 const AuthContext = createContext({
   user: null,
+  token: null,
   setUser: () => {},
+  setToken: () => {},
   loading: true,
   logout: () => {},
 });
@@ -27,15 +29,17 @@ export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function checkAuth() {
       try {
-        const token = await AsyncStorage.getItem("token");
-        if (token) {
+        const storedToken = await AsyncStorage.getItem('token');
+        if (storedToken) {
           const validUser = await validateToken(token);
           if (validUser) {
+            setToken(storedToken);
             setUser(validUser);
           } else {
             await AsyncStorage.removeItem("token");
@@ -53,13 +57,14 @@ export function AuthProvider({ children }) {
 
   // 🔥 Função de logout global
   const logout = async () => {
-    await AsyncStorage.removeItem("token");
-    await AsyncStorage.removeItem("userData");
+    await AsyncStorage.removeItem('token');
+    await AsyncStorage.removeItem('userData');
+    setToken(null);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, logout }}>
+    <AuthContext.Provider value={{ user, setUser, token, setToken, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );

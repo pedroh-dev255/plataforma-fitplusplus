@@ -1,9 +1,7 @@
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "../config.ts";
 
 async function create(userID, deviceToken) {
-    const token = await AsyncStorage.getItem("token");
     if (!token) {
         throw new Error("Usuário não autenticado");
     }
