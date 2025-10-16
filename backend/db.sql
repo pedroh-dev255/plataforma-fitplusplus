@@ -23,6 +23,9 @@ CREATE TABLE usuarios (
   criado_em TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO usuarios (`id`, `nome`, `email`, `senha`, `tipo`, `lesao`) 
+VALUES (0, 'Sitema', 'fitplusplus@gmail.com', 'admin', 'professor', false);
 select * from usuarios;
 select * from lesoes;
 
@@ -48,7 +51,7 @@ CREATE TABLE lesoes (
   PRIMARY KEY(id),
   Foreign Key (id_usuario) REFERENCES usuarios(id)
 );
-
+select * from lesoes;
 -- -----------------------------------------------------
 -- Tabela: Redefinição de senhas
 -- -----------------------------------------------------
@@ -72,6 +75,20 @@ CREATE TABLE esportes (
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 select * from esportes;
+
+create table chat(
+  id int not null AUTO_INCREMENT,
+  id_esporte int not null,
+  id_usuario int not null,
+  tipo varchar(20) not null,
+  conteudo text not null,
+  criado_em TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(id),
+  Foreign Key (id_esporte) REFERENCES esportes(id),
+  Foreign Key (id_usuario) REFERENCES usuarios(id)
+);
+select * from usuarios;
+insert into chat(`id_esporte`, `id_usuario`, `tipo`, `conteudo`) values (4, 0, 'sistema', 'Mensagem do sistema, Teste');
 -- -----------------------------------------------------
 -- Tabela: professores
 -- -----------------------------------------------------
@@ -102,6 +119,26 @@ CREATE TABLE alunos (
     REFERENCES professores (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 select * from alunos;
+-- -----------------------------------------------------
+-- Tabela: alunos
+-- -----------------------------------------------------
+CREATE TABLE avaliacao (
+  id int not null AUTO_INCREMENT,
+  id_aluno int not null,
+  id_prof int not null,
+  id_evento int not null,
+  agilidade int,
+  trabalhog int,
+  particip int,
+  forca int,
+  outro int,
+  coment text,
+  PRIMARY key(id),
+  Foreign Key (id_aluno) REFERENCES alunos(id),
+  Foreign Key (id_prof) REFERENCES professores(id),
+  Foreign Key (id_evento) REFERENCES eventos(id)
+);
+
 -- -----------------------------------------------------
 -- Tabela: usuario_esportes
 -- -----------------------------------------------------
@@ -139,8 +176,10 @@ CREATE TABLE eventos (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 alter table eventos
   add COLUMN tipo ENUM('publico','particular') DEFAULT 'publico';
-drop table eventos;
-drop table evento_participantes;
+  
+  select * from eventos;
+
+  select * from evento_participantes;
 -- -----------------------------------------------------
 -- Tabela: evento_participantes
 -- -----------------------------------------------------

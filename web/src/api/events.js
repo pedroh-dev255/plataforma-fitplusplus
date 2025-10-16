@@ -1,9 +1,12 @@
 import axios from "axios";
 import {API_URL} from "../../config.ts"
 
-export async function fetchEvents(id) {
+export async function fetchEvents(id, token) {
     try{
-        const response = await axios.get(`${API_URL}/api/events/getEvents`,
+        const response = await axios.post(`${API_URL}/api/events/getEvents`,
+            {
+                "userId": id
+            },
             {
                 headers: { Authorization: `Bearer ${token}` },
             }

@@ -5,6 +5,8 @@ import { useAuth } from '../AuthContext';
 import NotificationHandler from '../../components/NotificationHandler';
 import NotificationIcon from '../../components/NotificationIcon';
 import { toast, ToastContainer } from 'react-toastify';
+import { ArrowLeft, Activity } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 //import 'react-toastify/dist/ReactToastify.css';
 
 type Turma = {
@@ -22,6 +24,7 @@ type Evento = {
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [name, setName] = useState(user?.nome || '');
   const [photo, setPhoto] = useState(user?.foto_perfil || '');
   const [dtNasc, setDtNasc] = useState('');
@@ -87,16 +90,7 @@ export default function ProfilePage() {
   };
 
   const handleAddEvento = () => {
-    if (!newEventoTitulo.trim()) return toast.error('Título do evento obrigatório');
-    const e: Evento = { id: Date.now().toString(), titulo: newEventoTitulo.trim(), descricao: newEventoDescricao, dataHora: newEventoDataHora };
-    const next = [e, ...eventos];
-    setEventos(next);
-    localStorage.setItem(`professor_${user.id}_eventos`, JSON.stringify(next));
-    setShowEventoModal(false);
-    setNewEventoTitulo('');
-    setNewEventoDescricao('');
-    setNewEventoDataHora('');
-    toast.success('Evento criado');
+    
   };
 
   return (
@@ -106,8 +100,14 @@ export default function ProfilePage() {
         <NotificationIcon />
       </div>
       <ToastContainer position="top-right" />
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
-        <button style={{ marginRight: 12 }} onClick={() => window.history.back()}>◀ Voltar</button>
+      <div className="flex items-center mb-6">
+        <button
+          onClick={() => router.push('/')}
+          className="flex items-center gap-2 text-white hover:text-blue-300 transition"
+        >
+          <ArrowLeft size={20} />
+          <span>Voltar</span>
+        </button>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 50 }}>
@@ -130,7 +130,7 @@ export default function ProfilePage() {
 
       {user.tipo === 'professor' && (
         <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-          <div style={{ flex: 1, backgroundColor: 'rgba(12, 61, 131, 0.97)', borderRadius: 16, padding: 15, cursor: 'pointer' }}>
+          <div onClick={() => router.push('/profile/alunos')} style={{ flex: 1, backgroundColor: 'rgba(12, 61, 131, 0.97)', borderRadius: 16, padding: 15, cursor: 'pointer' }}>
             <img src="/alunos.png" style={{ width: 80, height: 80, borderRadius: 12, marginBottom: 10 }} />
             <div style={{ fontWeight: 'bold', fontSize: 16 }}>Alunos</div>
             <div>Meus alunos</div>
@@ -143,17 +143,17 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Modal criar turma */}
-      {showTurmaModal && (
-        <div style={modalOverlayStyle}>
-          <div style={modalCardStyle}>
-            <h3>Criar turma</h3>
-            <input placeholder="Nome da turma" value={newTurmaNome} onChange={e => setNewTurmaNome(e.target.value)} style={inputStyle}/>
-            <input placeholder="Descrição" value={newTurmaDescricao} onChange={e => setNewTurmaDescricao(e.target.value)} style={inputStyle}/>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
-              <button style={modalBtnStyle} onClick={() => setShowTurmaModal(false)}>Cancelar</button>
-              <button style={modalBtnPrimaryStyle} onClick={handleAddTurma}>Criar</button>
-            </div>
+      {user.tipo !== 'professor' && (
+        <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+          <div style={{ flex: 1, backgroundColor: 'rgba(12, 61, 131, 0.97)', borderRadius: 16, padding: 15, cursor: 'pointer' }}>
+            <img src="/evento.png" style={{ width: 80, height: 80, borderRadius: 12, marginBottom: 10 }} />
+            <div style={{ fontWeight: 'bold', fontSize: 16 }}>Meus eventos</div>
+            <div>Eventos que participei/participarei</div>
+          </div>
+          <div style={{ flex: 1, backgroundColor: 'rgba(12, 61, 131, 0.97)', borderRadius: 16, padding: 15, cursor: 'pointer' }}>
+            <img src="/evento.png" style={{ width: 80, height: 80, borderRadius: 12, marginBottom: 10 }} />
+            <div style={{ fontWeight: 'bold', fontSize: 16 }}>Minhas Metricas</div>
+            <div>Minhas avaliações</div>
           </div>
         </div>
       )}

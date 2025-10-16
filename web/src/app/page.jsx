@@ -11,15 +11,15 @@ import NotificationIcon from "../components/NotificationIcon";
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
     const loadEvents = async () => {
       if (user?.id) {
         try {
-          const ev = await fetchEvents(user.id);
-          setEvents(ev || []);
+          const ev = await fetchEvents(user.id, token);
+          setEvents(ev.events || []);
         } catch (err) {
           console.error("Erro ao carregar eventos:", err);
         }

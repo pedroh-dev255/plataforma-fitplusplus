@@ -100,60 +100,71 @@ export default function ChatPage() {
       {/* Área de mensagens */}
       <div
         ref={chatRef}
+        style={{ 
+            backgroundImage: "url('/26a50e2c2a5db52e3ebf2f8466e7ee2f3b5f0bd9.jpg')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed'
+         }}
         className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-blue-700"
       >
-        {carregando ? (
-          <p className="text-center text-gray-400 mt-10">Carregando mensagens...</p>
-        ) : mensagens.length > 0 ? (
-          mensagens.map((msg) => {
-            const isProfessor = msg.tipo_user === 'professor';
-            const isMine = msg.id_usuario === user?.id;
+  
+                {carregando ? (
+                <p className="text-center text-gray-400 mt-10">Carregando mensagens...</p>
+                ) : mensagens.length > 0 ? (
+                mensagens.map((msg) => {
+                    const isProfessor = msg.tipo_user === 'professor';
+                    const isMine = msg.id_usuario === user?.id;
 
-            if (msg.tipo === 'sistema') {
-              return (
-                <div key={msg.id} className="flex justify-center">
-                  <div className="bg-green-800/60 border border-green-600 text-green-100 px-4 py-2 rounded-lg text-sm text-center max-w-[80%]">
-                    {msg.conteudo}
-                  </div>
-                </div>
-              );
-            }
+                    if (msg.tipo === 'sistema') {
+                    return (
+                        <div key={msg.id} className="flex justify-center">
+                        <div className="bg-green-800/60 border border-green-600 text-green-100 px-4 py-2 rounded-lg text-sm text-center max-w-[80%]">
+                            {msg.conteudo}
+                        </div>
+                        </div>
+                    );
+                    }
 
-            return (
-              <div
-                key={msg.id}
-                className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
-              >
-                <div
-                  className={`rounded-lg p-2 max-w-[80%] border ${
-                    isProfessor
-                      ? 'bg-yellow-700/60 border-yellow-600'
-                      : isMine
-                      ? 'bg-blue-700/60 border-blue-500'
-                      : 'bg-blue-900/40 border-blue-700'
-                  }`}
-                >
-                  <span
-                    className={`font-semibold ${
-                      isProfessor ? 'text-yellow-300' : 'text-blue-300'
-                    }`}
-                  >
-                    {msg.nome}
-                  </span>
-                  <p className="text-sm break-words">{msg.conteudo}</p>
-                </div>
-                <span className="text-xs text-gray-500 mt-1">
-                  {new Date(msg.criado_em).toLocaleTimeString('pt-BR', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-              </div>
-            );
-          })
-        ) : (
-          <p className="text-center text-gray-500 mt-10">Nenhuma mensagem ainda.</p>
-        )}
+                    return (
+                        
+                    <div
+                        key={msg.id}
+                        className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
+                    >
+                        <div
+                        className={`rounded-lg p-2 max-w-[80%] border ${
+                            isProfessor
+                            ? 'bg-yellow-700/60 border-yellow-600'
+                            : isMine
+                            ? 'bg-blue-700/60 border-blue-500'
+                            : 'bg-blue-900/40 border-blue-700'
+                        }`}
+                        >
+                        <span
+                            className={`font-semibold ${
+                            isProfessor ? 'text-yellow-300' : 'text-blue-300'
+                            }`}
+                        >
+                            {msg.nome}
+                        </span>
+                        <p className="text-sm break-words">{msg.conteudo}</p>
+                        </div>
+                        <span className="text-xs text-gray-500 mt-1">
+                        {new Date(msg.criado_em).toLocaleTimeString('pt-BR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                        })}
+                        </span>
+                    </div>
+                    );
+                })
+                ) : (
+                <p className="text-center text-gray-500 mt-10">Nenhuma mensagem ainda.</p>
+                )}
+            
+        
       </div>
 
       {/* Campo de envio */}
