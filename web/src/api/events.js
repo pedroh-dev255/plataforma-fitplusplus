@@ -17,3 +17,22 @@ export async function fetchEvents(id, token) {
         return { success: false, message: err.response.data.message };
     }
 }
+
+export async function addPart(id_prof, id_aluno, id_evento, token) {
+        try{
+        const response = await axios.post(`${API_URL}/api/events/addPart`,
+            {
+                "id_prof": id_prof,
+                "id_user": id_aluno,
+                "id_evento": id_evento
+            },
+            {
+                headers: { Authorization: `Bearer ${token}` },
+            }
+        );
+        return response.data;
+    } catch (err) {
+        console.error("Erro no login:", err);
+        return { success: false, message: err.response.data.message };
+    }
+}

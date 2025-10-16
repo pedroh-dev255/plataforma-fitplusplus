@@ -1,6 +1,4 @@
-const { getEventsService, createEventService } = require('../services/eventsService');
-
-
+const { getEventsService, createEventService, addPartService } = require('../services/eventsService');
 
 async function getEvents(req, res) {
     const { userId, dtinicio, dtfim } = req.body;
@@ -52,8 +50,35 @@ async function createEvent(req, res) {
     }
 }
 
+async function addPart(req, res) {
+    const {id_prof, id_user, id_evento} = req.body;
+    if(!id_prof || !id_user || !id_evento){
+        return res.status(400).json({
+            success: false,
+            message: "dados faltando"
+        })
+    }
+    try {
+        const result = await addPartService(id_prof, id_user, id_evento);
+
+        if(!result){
+            throw new Error("Participante não cadastrado");
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Participante Cadastrado"
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "erro" + error.message
+        });
+    }
+}
 
 module.exports = {
     getEvents,
-    createEvent
+    createEvent,
+    addPart
 };
