@@ -38,10 +38,6 @@ export default function ForumPage() {
     loadSalas();
   }, [user]);
 
-  console.log(salas);
-
-  console.log(token);
-
   const salasFiltradas = salas.filter((sala) =>
     sala.nome.toLowerCase().includes(filtro.toLowerCase())
   );
