@@ -155,12 +155,13 @@ export default function BodyMappingScreen() {
     const algumaLesao = Object.values(lesoesObj).some((v) => v === true);
     const lesoesParaEnviar = hasDeficiency && algumaLesao ? lesoesObj : null;
 
-    const formData = new FormData();
-    Object.entries(userData).forEach(([key, val]) => formData.append(key, val));
-    formData.append('lesoes', JSON.stringify(lesoesParaEnviar));
+    const payload = {
+      ...userData,
+      lesoes: lesoesParaEnviar
+    };
 
     try {
-      const res = await register(formData);
+      const res = await register(payload);
       if (!res) throw new Error('Erro no cadastro');
       Alert.alert('Sucesso', 'Cadastro concluído!');
       navigation.navigate('Login');

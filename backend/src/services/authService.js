@@ -89,7 +89,33 @@ async function registerService(nome, dtNasc, email, senha, tipo, code, lesoes) {
 
   const usuarioId = result.insertId;
 
-  
+  if(lesao == true){
+      if (typeof lesoes === 'string') {
+      try {
+        lesoes = JSON.parse(lesoes);
+      } catch {
+        console.error('Erro ao fazer parse de lesoes:', lesoes);
+        lesoes = {};
+      }
+    }
+    const {cabeca,
+      pescoco,     
+      ombros ,     
+      peito ,      
+      bracos,      
+      torco  ,     
+      maos,        
+      pernas,      
+      joelho,      
+      panturrilha,
+      pes,
+    } = lesoes
+
+    await pool.execute(
+      'INSERT INTO lesoes(id_usuario, cabeca, pescoco, ombros, peito, bracos, torco, maos, pernas, joelho, panturrilha, pes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+      [usuarioId, cabeca, pescoco, ombros, peito, bracos, torco, maos, pernas, joelho, panturrilha, pes]
+    );
+  }
 
   if (tipo === 'professor') {
     const codigo_professor = uuidv4().split('-')[0];

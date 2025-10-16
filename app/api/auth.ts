@@ -35,10 +35,11 @@ async function login(email: string, senha: string, tipoUsuario: string) {
   }
 }
 
-async function register(formData: FormData) {
-  console.log(formData);
+async function register(payload: FormData) {
+  console.log(payload);
   try {
-    const response = await api.post(`/api/auth/register`, formData, {
+    const { schoolcode, classcode, nome, dtNasc, email, senha, tipo, lesoes } = payload;
+    const response = await api.post(`/api/auth/register`, { schoolcode, classcode, nome, dtNasc, email, senha, tipo, lesoes}, {
       headers: { 'Accept': 'application/json'},
     });
 
