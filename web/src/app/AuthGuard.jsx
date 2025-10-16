@@ -1,32 +1,26 @@
-'use client'; // Obrigatório para usar hooks (useEffect) e useRouter
-
+'use client'; 
 import React, { useEffect } from 'react';
 import { useAuth } from './AuthContext'; 
-// Importamos o hook de navegação do App Router
 import { useRouter, usePathname } from 'next/navigation'; 
 
 // Definição das rotas públicas
-const publicRoutes = [ '/login', '/register', '/reset'];
+const publicRoutes = [ '/login', '/register', '/body-mapping', '/reset'];
 
 const AuthGuard = ({ children }) => {
     const { user, loading } = useAuth();
     const router = useRouter();
-    const pathname = usePathname(); // Usamos usePathname para obter a rota atual
+    const pathname = usePathname(); 
     
     // Verifica se a rota atual é uma das rotas públicas
     const isPublicRoute = publicRoutes.includes(pathname);
 
     useEffect(() => {
-        // Redirecionamento só é executado após o carregamento
         if (!loading) {
-            // 1. Usuário LOGADO tentando acessar rota PÚBLICA (redireciona para Home)
-            // Se o usuário está logado E a rota é pública (e não é a raiz que pode ser usada como splash), redireciona.
             if (user && isPublicRoute && pathname !== '/') {
-                router.push('/home');
+                router.push('/');
             }
-            // 2. Usuário DESLOGADO tentando acessar rota PRIVADA (redireciona para Login)
+        
             else if (!user && !isPublicRoute) {
-                // Redireciona qualquer rota privada para a tela de login
                 router.push('/login');
             }
         }
@@ -44,7 +38,6 @@ const AuthGuard = ({ children }) => {
         );
     }
     
-    // Se a autenticação estiver resolvida e o usuário estiver na rota correta, renderiza o conteúdo (children)
     return children;
 };
 

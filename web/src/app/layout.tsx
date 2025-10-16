@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-// IMPORTAÇÕES NECESSÁRIAS (Ajuste o caminho se AuthContext e AuthGuard estiverem em outra pasta)
 import { AuthProvider } from "./AuthContext"; 
 import AuthGuard from "./AuthGuard"; 
-
+import "./globals.css"
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -30,11 +28,6 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/*
-          O provedor de autenticação e o guarda DEVE envolver o children.
-          Como AuthProvider e AuthGuard são 'use client', o layout Server Component
-          os importa normalmente e os utiliza para envolver o restante do app.
-        */}
         <AuthProvider>
             <AuthGuard>
                 {children}
