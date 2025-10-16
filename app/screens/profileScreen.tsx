@@ -181,20 +181,18 @@ export default function ProfileScreen() {
 
       {user.tipo === 'professor' && (
         <View style={styles.trainCards}>
-          <TouchableOpacity onPress={() => setAlunosModal(true)} style={styles.trainCard}>
+          <TouchableOpacity onPress={() => navigation.navigate('Alunos')} style={styles.trainCard}>
             <View >
               <Image source={require('../assets/alunos.png')} style={styles.trainImage} />
               <Text style={styles.trainTitle}>Alunos</Text>
               <Text style={styles.trainDesc}>Meus alunos</Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.trainCard}>
+          <TouchableOpacity  style={styles.trainCard}>
             <View >
-              <Image source={require('../assets/forum.png')} style={styles.trainImage} />
-              <Text style={styles.trainTitle}>Forum</Text>
-              <Text style={styles.trainDesc}>asd</Text>
-               
-              
+              <Image source={require('../assets/evento.png')} style={styles.trainImage} />
+              <Text style={styles.trainTitle}>Cadastro de evento</Text>
+              <Text style={styles.trainDesc}>Criação de novos eventos</Text>
             </View>
           </TouchableOpacity>
         </View>

@@ -6,7 +6,7 @@ import { useAuth } from './AuthContext';
 import { useRouter, usePathname } from 'next/navigation'; 
 
 // Definição das rotas públicas
-const publicRoutes = ['/', '/login', '/register', '/reset'];
+const publicRoutes = [ '/login', '/register', '/reset'];
 
 const AuthGuard = ({ children }) => {
     const { user, loading } = useAuth();
@@ -22,7 +22,7 @@ const AuthGuard = ({ children }) => {
             // 1. Usuário LOGADO tentando acessar rota PÚBLICA (redireciona para Home)
             // Se o usuário está logado E a rota é pública (e não é a raiz que pode ser usada como splash), redireciona.
             if (user && isPublicRoute && pathname !== '/') {
-                router.push('/home'); 
+                router.push('/home');
             }
             // 2. Usuário DESLOGADO tentando acessar rota PRIVADA (redireciona para Login)
             else if (!user && !isPublicRoute) {

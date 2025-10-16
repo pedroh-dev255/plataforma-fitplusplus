@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { FloatingAction } from "react-native-floating-action";
 import NotificationPrompt from '../components/notifyComponent';
 import NotificationHandler from '../components/NotificationHandler';
 import NotificationIcon from '../components/NotificationIcon';

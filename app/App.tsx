@@ -18,6 +18,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { AuthProvider, useAuth } from "./components/AuthContext";
 import LoginScreen from "./screens/loginScreen";
 import HomeScreen  from "./screens/HomeScreen";
+import AlunosScreen from "./screens/AlunosScreen";
 import ResetScreen from "./screens/resetScreen";
 import EventsScreen from './screens/eventsScreen';
 import ProfileScreen from "./screens/profileScreen";
@@ -75,6 +76,7 @@ function AppContent() {
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="Eventos" component={EventsScreen} />
+            <Stack.Screen name="Alunos" component={AlunosScreen} />
           </>
         ) : (
           <>
