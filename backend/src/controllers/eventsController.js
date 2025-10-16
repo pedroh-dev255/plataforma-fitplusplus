@@ -24,16 +24,16 @@ async function getEvents(req, res) {
 
 async function createEvent(req, res) {
     try {
-        const {id_prof, esporte, titulo, desc, local, lat, long, dth, max } = req.body;
+        const {id_prof, esporte, tipo, titulo, desc, local, lat, long, dth, max } = req.body;
 
-        if(!id_prof || !esporte || !titulo || !dth || !max ){
+        if(!id_prof || !tipo || !esporte || !titulo || !dth || !max ){
             return res.status(400).json({
                 success: false,
                 message: "Dados incompletos!"
             });
         }
 
-        const result = await createEventService(id_prof, esporte, titulo, desc, local, lat, long, dth, max);
+        const result = await createEventService(id_prof, esporte, tipo, titulo, desc, local, lat, long, dth, max);
 
         if(!result){
             throw new Error("Evento não cadastrado");

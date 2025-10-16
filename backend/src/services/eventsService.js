@@ -77,16 +77,16 @@ async function getEventsService(userId, dtinicio, dtfim) {
 }
 
 
-async function createEventService(id_prof, esporte, titulo, desc, local, lat, long, dth, max) {
+async function createEventService(id_prof, esporte, tipo, titulo, desc, local, lat, long, dth, max) {
     try {
         const [result] = await pool.execute(
-            "INSERT INTO eventos (criador_id, esporte_id, titulo, descricao, local, latitude, longitude, data_hora, max_participantes) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [id_prof, esporte, titulo, desc, local, lat, long, dth, max]
+            "INSERT INTO eventos (criador_id, esporte_id, tipo, titulo, descricao, local, latitude, longitude, data_hora, max_participantes) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [id_prof, esporte, tipo, titulo, desc, local, lat, long, dth, max]
         );
 
         if(result.insertId){
             const [result2] = await pool.execute(
-                "INSERT INTO evento_participantes (evento_id, usuario_id, status) values (?, ?, 'confirmado')",
+                "INSERT INTO evento_participantes (evento_id, usuario_id) values (?, ?)",
                 [result.insertId, id_prof]
             );
         }else {

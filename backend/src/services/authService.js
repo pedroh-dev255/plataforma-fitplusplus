@@ -55,90 +55,101 @@ async function loginService(email, password, tipo) {
 }
 
 async function registerService(nome, dtNasc, email, senha, tipo, code, lesoes) {
-  const [rows] = await pool.execute('SELECT * FROM usuarios WHERE email = ?', [email]);
-  if (rows.length > 0) {
-    return { success: false, message: 'Usuário já existe' };
-  }
-
-  if (tipo === 'professor' && code !== process.env.PROFESSOR_CODE) {
-    return { success: false, message: 'Código mestre de professor inválido' };
-  }
-
-  if (tipo === 'aluno') {
-    if (!code) return { success: false, message: 'Código do professor é obrigatório' };
-
-    const [profRows] = await pool.execute(
-      'SELECT * FROM professores WHERE codigo_professor = ?',
-      [code]
-    );
-    if (profRows.length === 0) {
-      return { success: false, message: 'Professor não encontrado' };
+  try {
+    const [rows] = await pool.execute('SELECT * FROM usuarios WHERE email = ?', [email]);
+    if (rows.length > 0) {
+      return { success: false, message: 'Usuário já existe' };
     }
-  }
-  var lesao;
-  if(lesoes == null){
-    lesao = false;
-  } else{
-    lesao = true
-  }
-  const hashedPassword = await bcrypt.hash(senha, 10);
-  const [result] = await pool.execute(
-    'INSERT INTO usuarios (nome, data_nascimento, email, senha, tipo, lesao) VALUES (?, ?, ?, ?, ?, ?)',
-    [nome, dtNasc, email, hashedPassword, tipo, lesao]
-  );
 
-  const usuarioId = result.insertId;
+    if (tipo === 'professor' && code !== process.env.PROFESSOR_CODE) {
+      return { success: false, message: 'Código mestre de professor inválido' };
+    }
 
-  if(lesao == true){
-      if (typeof lesoes === 'string') {
-      try {
-        lesoes = JSON.parse(lesoes);
-      } catch {
-        console.error('Erro ao fazer parse de lesoes:', lesoes);
-        lesoes = {};
+    if (tipo === 'aluno') {
+      if (!code) return { success: false, message: 'Código do professor é obrigatório' };
+
+      const [profRows] = await pool.execute(
+        'SELECT * FROM professores WHERE codigo_professor = ?',
+        [code]
+      );
+
+      if (profRows.length === 0) {
+        return { success: false, message: 'Professor não encontrado' };
       }
+
+
     }
-    const {cabeca,
-      pescoco,     
-      ombros ,     
-      peito ,      
-      bracos,      
-      torco  ,     
-      maos,        
-      pernas,      
-      joelho,      
-      panturrilha,
-      pes,
-    } = lesoes
-
-    await pool.execute(
-      'INSERT INTO lesoes(id_usuario, cabeca, pescoco, ombros, peito, bracos, torco, maos, pernas, joelho, panturrilha, pes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
-      [usuarioId, cabeca, pescoco, ombros, peito, bracos, torco, maos, pernas, joelho, panturrilha, pes]
+    var lesao;
+    if(lesoes == null){
+      lesao = false;
+    } else{
+      lesao = true
+    }
+    const hashedPassword = await bcrypt.hash(senha, 10);
+    const [result] = await pool.execute(
+      'INSERT INTO usuarios (nome, data_nascimento, email, senha, tipo, lesao) VALUES (?, ?, ?, ?, ?, ?)',
+      [nome, dtNasc, email, hashedPassword, tipo, lesao]
     );
+
+    const usuarioId = result.insertId;
+
+    if(lesao == true){
+        if (typeof lesoes === 'string') {
+        try {
+          lesoes = JSON.parse(lesoes);
+        } catch {
+          console.error('Erro ao fazer parse de lesoes:', lesoes);
+          lesoes = {};
+        }
+      }
+      const {cabeca,
+        pescoco,     
+        ombros ,     
+        peito ,      
+        bracos,      
+        torco  ,     
+        maos,        
+        pernas,      
+        joelho,      
+        panturrilha,
+        pes,
+      } = lesoes
+
+      await pool.execute(
+        'INSERT INTO lesoes(id_usuario, cabeca, pescoco, ombros, peito, bracos, torco, maos, pernas, joelho, panturrilha, pes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+        [usuarioId, cabeca, pescoco, ombros, peito, bracos, torco, maos, pernas, joelho, panturrilha, pes]
+      );
+    }
+
+    if (tipo === 'professor') {
+      const codigo_professor = uuidv4().split('-')[0];
+      await pool.execute(
+        'INSERT INTO professores (usuario_id, codigo_professor) VALUES (?, ?)',
+        [usuarioId, codigo_professor]
+      );
+    }
+
+    if (tipo === 'aluno') {
+      const [profRows] = await pool.execute(
+        'SELECT usuario_id FROM professores WHERE codigo_professor = ?',
+        [code]
+      );
+      const professorId = profRows[0].usuario_id;
+
+      console.log(profRows)
+
+      await pool.execute(
+        'INSERT INTO alunos (usuario_id, professor_id) VALUES (?, ?)',
+        [usuarioId, professorId]
+      );
+    }
+
+    return { success: true, message: 'Usuário criado com sucesso', userId:  usuarioId};
+
+  } catch (error) {
+    console.error('Erro ao redefinir senha:', error);
+    throw new Error("Erro ao cadastrar: " + error.message);
   }
-
-  if (tipo === 'professor') {
-    const codigo_professor = uuidv4().split('-')[0];
-    await pool.execute(
-      'INSERT INTO professores (usuario_id, codigo_professor) VALUES (?, ?)',
-      [usuarioId, codigo_professor]
-    );
-  }
-
-  if (tipo === 'aluno') {
-    const [profRows] = await pool.execute(
-      'SELECT id FROM professores WHERE codigo_professor = ?',
-      [code]
-    );
-    const professorId = profRows[0].id;
-
-    await pool.execute(
-      'INSERT INTO alunos (usuario_id, professor_id) VALUES (?, ?)',
-      [usuarioId, professorId]
-    );
-  }
-
-  return { success: true, message: 'Usuário criado com sucesso', userId:  usuarioId};
 }
 
 async function resetService(email) {
@@ -218,7 +229,7 @@ async function resetConfirmService(token, newPassword) {
     if (rows.length === 0) {
       return {
         success: false,
-        message: 'Token inválido'
+        message: 'Token de redefinição inválido'
       };
     }
     const resetEntry = rows[0];

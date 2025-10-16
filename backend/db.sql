@@ -24,9 +24,9 @@ CREATE TABLE usuarios (
   PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 select * from usuarios;
+select * from lesoes;
 
-alter TABLE usuarios
-  add COLUMN lesao BOOLEAN not null;
+
 -- -----------------------------------------------------
 -- Tabela: Lesões
 -- -----------------------------------------------------
@@ -101,7 +101,7 @@ CREATE TABLE alunos (
   CONSTRAINT fk_aluno_professor FOREIGN KEY (professor_id)
     REFERENCES professores (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
+select * from alunos;
 -- -----------------------------------------------------
 -- Tabela: usuario_esportes
 -- -----------------------------------------------------

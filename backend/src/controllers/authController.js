@@ -45,7 +45,7 @@ async function login(req, res) {
 }
 
 async function register(req, res) {
-  console.log(req.body)
+  //console.log(req.body)
   try {
     const { schoolcode, classcode, nome, dtNasc, email, senha, tipo, lesoes } = req.body;
 
@@ -66,7 +66,7 @@ async function register(req, res) {
 
     res.status(201).json(response);
   } catch (error) {
-    console.error(error);
+    //console.error(error);
     res.status(500).json({ success: false, message: 'Erro no servidor' });
   }
 }
