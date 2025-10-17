@@ -357,7 +357,7 @@ export default function EventosPage() {
                                 if (!selectedEvent || !s.id) return;
 
                                 try {
-                                    const result = await addPart(user.id, s.id, selectedEvent.id, token);
+                                    const result = await addPart(user.id, s.usuario_id, selectedEvent.id, token);
                                     console.log(result);
 
                                     // Atualiza a lista de participantes localmente

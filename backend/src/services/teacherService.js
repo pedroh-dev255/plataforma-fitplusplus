@@ -5,6 +5,7 @@ async function alunos(id) {
 const [rows] = await pool.execute(
     `SELECT 
         al.*,
+        us.id as iduser,
         us.nome,
         us.email,
         us.tipo,

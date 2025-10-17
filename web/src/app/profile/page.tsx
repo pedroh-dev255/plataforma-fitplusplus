@@ -158,9 +158,11 @@ if (!newEventoTitulo || !newEventoDataHora) {
         </div>
         <div>
           <div style={{ fontWeight: 'bold', fontSize: 18 }}>{user.nome}</div>
-          <button onClick={handleShareCode} style={{ color: '#cfe8ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            Código de Professor: {user.codigo_professor}
-          </button>
+          {user.tipo === 'professor' && (
+            <button onClick={handleShareCode} style={{ color: '#cfe8ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+              Código de Professor: {user.codigo_professor}
+            </button>
+          )}
         </div>
       </div>
 
