@@ -52,6 +52,10 @@ CREATE TABLE lesoes (
   Foreign Key (id_usuario) REFERENCES usuarios(id)
 );
 select * from lesoes;
+
+select * from alunos;
+select * from usuarios;
+
 -- -----------------------------------------------------
 -- Tabela: Redefinição de senhas
 -- -----------------------------------------------------
@@ -88,6 +92,18 @@ create table chat(
   Foreign Key (id_usuario) REFERENCES usuarios(id)
 );
 select * from usuarios;
+
+select * from chat;
+
+select * from `resetPass`;
+
+select * from notificacoes;
+
+select * from alunos;
+select * from lesoes;
+select * from professores;
+select * from eventos;
+select * from evento_participantes;
 insert into chat(`id_esporte`, `id_usuario`, `tipo`, `conteudo`) values (4, 0, 'sistema', 'Mensagem do sistema, Teste');
 -- -----------------------------------------------------
 -- Tabela: professores
@@ -113,12 +129,12 @@ CREATE TABLE alunos (
   professor_id INT DEFAULT NULL,
   objetivos TEXT,
   PRIMARY KEY (id),
-  CONSTRAINT fk_aluno_usuario FOREIGN KEY (usuario_id)
-    REFERENCES usuarios (id) ON DELETE CASCADE,
-  CONSTRAINT fk_aluno_professor FOREIGN KEY (professor_id)
-    REFERENCES professores (id) ON DELETE SET NULL
+  Foreign Key (usuario_id) REFERENCES usuarios(id),
+  Foreign Key (professor_id) REFERENCES usuarios(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 select * from alunos;
+drop table alunos;
+drop table avaliacao;
 -- -----------------------------------------------------
 -- Tabela: alunos
 -- -----------------------------------------------------
